@@ -30,6 +30,7 @@ all = [
 
 [project.scripts]
 healthcare-des = "healthcare_des.cli:main"
+healthcare-des-benchmark = "healthcare_des.benchmark_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
