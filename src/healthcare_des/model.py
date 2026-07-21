@@ -58,9 +58,7 @@ class ScenarioConfig:
         if self.reception_mean <= 0:
             raise ValueError("reception_mean must be positive")
         if not 0 <= self.preparation_low <= self.preparation_mode <= self.preparation_high:
-            raise ValueError(
-                "Preparation times must satisfy 0 <= low <= mode <= high"
-            )
+            raise ValueError("Preparation times must satisfy 0 <= low <= mode <= high")
         if self.scan_mean <= 0:
             raise ValueError("scan_mean must be positive")
         if any(
@@ -84,10 +82,18 @@ class SimulationResult:
     completed: int
     no_shows: int
     mean_wait_minutes: float
+    mean_reception_wait_minutes: float
+    mean_preparation_wait_minutes: float
+    mean_mri_wait_minutes: float
+    mean_reporting_wait_minutes: float
     mean_system_minutes: float
     p90_system_minutes: float
     completed_within_120_pct: float
     throughput_per_day: float
+    clerk_utilisation_pct: float
+    radiographer_utilisation_pct: float
+    mri_utilisation_pct: float
+    radiologist_utilisation_pct: float
 
 
 class MRIModel:
@@ -106,6 +112,12 @@ class MRIModel:
         self.records: list[dict[str, Any]] = []
         self.arrivals = 0
         self.no_shows = 0
+        self.busy_minutes = {
+            "clerks": 0.0,
+            "radiographers": 0.0,
+            "mri": 0.0,
+            "radiologists": 0.0,
+        }
 
     def patient_type(self) -> str:
         return str(
@@ -133,38 +145,45 @@ class MRIModel:
             self.no_shows += 1
             return
 
-        waits = 0.0
+        stage_waits: dict[str, float] = {}
+
         queue_start = self.env.now
         with self.clerks.request() as request:
             yield request
-            waits += self.env.now - queue_start
-            yield self.env.timeout(float(self.rng.exponential(self.config.reception_mean)))
+            stage_waits["reception_wait_minutes"] = self.env.now - queue_start
+            service_time = float(self.rng.exponential(self.config.reception_mean))
+            self.busy_minutes["clerks"] += service_time
+            yield self.env.timeout(service_time)
 
         queue_start = self.env.now
         with self.radiographers.request() as request:
             yield request
-            waits += self.env.now - queue_start
-            yield self.env.timeout(
-                float(
-                    self.rng.triangular(
-                        self.config.preparation_low,
-                        self.config.preparation_mode,
-                        self.config.preparation_high,
-                    )
+            stage_waits["preparation_wait_minutes"] = self.env.now - queue_start
+            service_time = float(
+                self.rng.triangular(
+                    self.config.preparation_low,
+                    self.config.preparation_mode,
+                    self.config.preparation_high,
                 )
             )
+            self.busy_minutes["radiographers"] += service_time
+            yield self.env.timeout(service_time)
 
         queue_start = self.env.now
         with self.mri.request(priority=self.PRIORITY[patient_type]) as request:
             yield request
-            waits += self.env.now - queue_start
-            yield self.env.timeout(self.scan_time(patient_type))
+            stage_waits["mri_wait_minutes"] = self.env.now - queue_start
+            service_time = self.scan_time(patient_type)
+            self.busy_minutes["mri"] += service_time
+            yield self.env.timeout(service_time)
 
         queue_start = self.env.now
         with self.radiologists.request() as request:
             yield request
-            waits += self.env.now - queue_start
-            yield self.env.timeout(float(self.rng.uniform(self.config.report_low, self.config.report_high)))
+            stage_waits["reporting_wait_minutes"] = self.env.now - queue_start
+            service_time = float(self.rng.uniform(self.config.report_low, self.config.report_high))
+            self.busy_minutes["radiologists"] += service_time
+            yield self.env.timeout(service_time)
 
         system_time = self.env.now - arrival
         self.records.append(
@@ -172,7 +191,8 @@ class MRIModel:
                 "patient_id": patient_id,
                 "patient_type": patient_type,
                 "arrival": arrival,
-                "wait_minutes": waits,
+                **stage_waits,
+                "wait_minutes": sum(stage_waits.values()),
                 "system_minutes": system_time,
             }
         )
@@ -198,13 +218,18 @@ class MRIModel:
             self.env.process(self.patient(patient_id, self.patient_type()))
 
 
+def _utilisation_pct(busy_minutes: float, capacity: int, horizon_minutes: float) -> float:
+    return float(busy_minutes / (capacity * horizon_minutes) * 100.0)
+
+
 def run_once(config: ScenarioConfig, replication: int = 0) -> tuple[SimulationResult, pd.DataFrame]:
     config.validate()
     rng = np.random.default_rng(config.seed + replication)
     env = simpy.Environment()
     model = MRIModel(env, config, rng)
     env.process(model.source())
-    env.run(until=(config.days * 24 * 60) + (24 * 60))
+    horizon_minutes = (config.days * 24 * 60) + (24 * 60)
+    env.run(until=horizon_minutes)
 
     frame = pd.DataFrame(model.records)
     if frame.empty:
@@ -217,10 +242,26 @@ def run_once(config: ScenarioConfig, replication: int = 0) -> tuple[SimulationRe
         completed=len(frame),
         no_shows=model.no_shows,
         mean_wait_minutes=float(frame["wait_minutes"].mean()),
+        mean_reception_wait_minutes=float(frame["reception_wait_minutes"].mean()),
+        mean_preparation_wait_minutes=float(frame["preparation_wait_minutes"].mean()),
+        mean_mri_wait_minutes=float(frame["mri_wait_minutes"].mean()),
+        mean_reporting_wait_minutes=float(frame["reporting_wait_minutes"].mean()),
         mean_system_minutes=float(system.mean()),
         p90_system_minutes=float(np.quantile(system, 0.90)),
         completed_within_120_pct=float((system <= 120).mean() * 100),
         throughput_per_day=float(len(frame) / config.days),
+        clerk_utilisation_pct=_utilisation_pct(
+            model.busy_minutes["clerks"], config.clerks, horizon_minutes
+        ),
+        radiographer_utilisation_pct=_utilisation_pct(
+            model.busy_minutes["radiographers"], config.radiographers, horizon_minutes
+        ),
+        mri_utilisation_pct=_utilisation_pct(
+            model.busy_minutes["mri"], config.mri_machines, horizon_minutes
+        ),
+        radiologist_utilisation_pct=_utilisation_pct(
+            model.busy_minutes["radiologists"], config.radiologists, horizon_minutes
+        ),
     )
     return result, frame
 
@@ -235,9 +276,17 @@ def summarise(results: pd.DataFrame) -> dict[str, float]:
     metrics = [
         "completed",
         "mean_wait_minutes",
+        "mean_reception_wait_minutes",
+        "mean_preparation_wait_minutes",
+        "mean_mri_wait_minutes",
+        "mean_reporting_wait_minutes",
         "mean_system_minutes",
         "p90_system_minutes",
         "completed_within_120_pct",
         "throughput_per_day",
+        "clerk_utilisation_pct",
+        "radiographer_utilisation_pct",
+        "mri_utilisation_pct",
+        "radiologist_utilisation_pct",
     ]
     return {metric: mean(results[metric].astype(float)) for metric in metrics}
