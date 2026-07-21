@@ -11,6 +11,18 @@ requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [{name = "Saurav Singla"}]
 keywords = ["healthcare", "simulation", "simpy", "capacity-planning", "patient-flow", "operations-research", "MRI", "digital-twin", "monte-carlo", "resource-optimisation"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Healthcare Industry",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+]
 dependencies = [
   "simpy>=4.1,<5",
   "numpy>=1.26,<3",
@@ -19,6 +31,12 @@ dependencies = [
   "scipy>=1.11,<2",
   "matplotlib>=3.8,<4",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
+Repository = "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
+Issues = "https://github.com/sauravsingla/healthcare-discrete-event-simulation/issues"
+Documentation = "https://github.com/sauravsingla/healthcare-discrete-event-simulation#readme"
 
 [project.optional-dependencies]
 dashboard = ["streamlit>=1.36,<2"]
@@ -37,6 +55,7 @@ all = ["streamlit>=1.36,<2"]
 healthcare-des = "healthcare_des.cli:main"
 healthcare-des-benchmark = "healthcare_des.benchmark_cli:main"
 healthcare-des-reproduce = "healthcare_des.reproduction_cli:main"
+healthcare-des-advanced-benchmark = "healthcare_des.advanced_benchmark_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -44,6 +63,20 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = "--strict-config --strict-markers"
+
+[tool.coverage.run]
+branch = true
+source = ["healthcare_des"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]
 
 [tool.ruff]
 line-length = 100
