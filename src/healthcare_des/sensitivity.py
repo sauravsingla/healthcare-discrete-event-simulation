@@ -17,14 +17,40 @@ def one_at_a_time(
     replications: int = 10,
 ) -> pd.DataFrame:
     """Measure KPI response to demand and no-show assumptions."""
+    base.validate()
+    if not demand_multipliers and not no_show_rates:
+        raise ValueError("At least one sensitivity value must be provided")
+    if any(multiplier <= 0 for multiplier in demand_multipliers):
+        raise ValueError("demand_multipliers must be positive")
+    if any(not 0 <= rate < 1 for rate in no_show_rates):
+        raise ValueError("no_show_rates must be in [0, 1)")
+    if replications <= 0:
+        raise ValueError("replications must be positive")
+
     rows: list[dict[str, float | str]] = []
     for multiplier in demand_multipliers:
-        config = replace(base, name=f"demand-{multiplier:.2f}", daily_demand=base.daily_demand * multiplier)
-        rows.append({"factor": "daily_demand", "value": multiplier, **summarise(run_replications(config, replications))})
+        config = replace(
+            base,
+            name=f"demand-{multiplier:.2f}",
+            daily_demand=base.daily_demand * multiplier,
+        )
+        rows.append(
+            {
+                "factor": "daily_demand",
+                "value": multiplier,
+                **summarise(run_replications(config, replications)),
+            }
+        )
 
     for rate in no_show_rates:
         config = replace(base, name=f"no-show-{rate:.2f}", no_show_rate=rate)
-        rows.append({"factor": "no_show_rate", "value": rate, **summarise(run_replications(config, replications))})
+        rows.append(
+            {
+                "factor": "no_show_rate",
+                "value": rate,
+                **summarise(run_replications(config, replications)),
+            }
+        )
 
     return pd.DataFrame(rows)
 
@@ -40,8 +66,12 @@ def monte_carlo(
     Parameter ranges are illustrative and should be replaced with locally
     validated estimates before operational use.
     """
+    base.validate()
     if samples <= 0:
         raise ValueError("samples must be positive")
+    if replications <= 0:
+        raise ValueError("replications must be positive")
+
     rng = np.random.default_rng(seed)
     rows: list[dict[str, float | int]] = []
     for sample in range(samples):
