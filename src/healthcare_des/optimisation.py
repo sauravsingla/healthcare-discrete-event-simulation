@@ -10,6 +10,13 @@ import pandas as pd
 from .model import ScenarioConfig, run_replications, summarise
 
 
+def _validate_positive_options(name: str, values: tuple[int, ...]) -> None:
+    if not values:
+        raise ValueError(f"{name} must contain at least one option")
+    if any(value <= 0 for value in values):
+        raise ValueError(f"{name} options must be positive integers")
+
+
 def search_capacity(
     base: ScenarioConfig,
     mri_options: tuple[int, ...] = (2, 3, 4, 5),
@@ -24,6 +31,15 @@ def search_capacity(
     a penalty whenever average waiting time exceeds the target. This makes the
     method easy to audit and replace with organisation-specific cost weights.
     """
+    base.validate()
+    _validate_positive_options("mri_options", mri_options)
+    _validate_positive_options("radiographer_options", radiographer_options)
+    _validate_positive_options("radiologist_options", radiologist_options)
+    if replications <= 0:
+        raise ValueError("replications must be positive")
+    if target_wait_minutes < 0:
+        raise ValueError("target_wait_minutes must be non-negative")
+
     rows: list[dict[str, float | int | str]] = []
     for machines, radiographers, radiologists in product(
         mri_options, radiographer_options, radiologist_options
@@ -49,6 +65,6 @@ def search_capacity(
         )
 
     return pd.DataFrame(rows).sort_values(
-        ["objective_score", "mean_wait_minutes", "throughput_per_day"] ,
+        ["objective_score", "mean_wait_minutes", "throughput_per_day"],
         ascending=[True, True, False],
     ).reset_index(drop=True)
