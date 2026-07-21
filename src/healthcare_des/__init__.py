@@ -1,5 +1,7 @@
 """Healthcare demand and capacity discrete-event simulation."""
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .advanced_model import (
     AdvancedScenarioConfig,
     AdvancedSimulationResult,
@@ -37,4 +39,8 @@ __all__ = [
     "save_distribution_plots",
     "calibrate_parameters",
 ]
-__version__ = "0.4.0"
+
+try:
+    __version__ = version("healthcare-des")
+except PackageNotFoundError:  # Source-tree fallback before installation.
+    __version__ = "0+unknown"
