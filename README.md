@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.4236%2Fojmsi.2020.84007-blue)](https://doi.org/10.4236/ojmsi.2020.84007)
 
-An open-source Python framework for **healthcare demand forecasting, MRI capacity planning, patient-flow simulation, queue analysis, resource utilisation and scenario comparison** using SimPy.
+An open-source Python **healthcare digital twin** for MRI demand forecasting, capacity planning, patient-flow simulation, queue analysis, resource utilisation, Monte Carlo uncertainty analysis and transparent staffing optimisation.
 
 This repository provides a reproducible implementation and extension of:
 
@@ -20,11 +20,9 @@ This repository provides a reproducible implementation and extension of:
 
 Radiology services must balance stochastic patient demand against constrained MRI scanners, radiographers, radiologists, clerical capacity and operating hours. A mismatch can create long queues, poor throughput and underused or overloaded resources.
 
-The model allows researchers and operational teams to test alternative configurations without disrupting a live healthcare service.
+The project combines discrete-event simulation, synthetic demand generation, public aggregate NHS data calibration, scenario analysis and capacity search so researchers can test alternatives without disrupting a live healthcare service.
 
-## Implemented model
-
-The Python simulation currently includes:
+## Implemented capabilities
 
 - outpatient, inpatient and emergency patient classes;
 - emergency-priority MRI access through `simpy.PriorityResource`;
@@ -33,8 +31,15 @@ The Python simulation currently includes:
 - stochastic arrivals, no-shows and service-time distributions;
 - 8-hour, 16-hour and 24-hour scenarios;
 - repeated experiments with deterministic random seeds;
+- synthetic daily demand with weekday, weekend and Monday effects;
+- Monte Carlo uncertainty analysis;
+- one-at-a-time sensitivity analysis;
+- transparent grid-search capacity optimisation;
+- interactive Streamlit digital-twin dashboard;
 - CSV outputs for throughput, waiting time, system time and SLA performance;
-- calibration from official NHS England monthly diagnostic activity data.
+- calibration from official NHS England monthly diagnostic activity data;
+- automated tests, pre-commit checks and Python 3.10–3.12 CI;
+- Docker-based reproducible dashboard deployment.
 
 ## Public external dataset
 
@@ -51,16 +56,16 @@ git clone https://github.com/sauravsingla/healthcare-discrete-event-simulation.g
 cd healthcare-discrete-event-simulation
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -e ".[dev,analysis]"
+pip install -e ".[dev,analysis,dashboard]"
 ```
 
-## Run a scenario
+## Run a simulation scenario
 
 ```bash
 healthcare-des --config configs/baseline.yaml --replications 20
 ```
 
-Run the extended-hours and demand-aligned staffing experiments:
+Run extended-hours and demand-aligned staffing experiments:
 
 ```bash
 healthcare-des --config configs/extended-hours.yaml --replications 20 \
@@ -70,7 +75,60 @@ healthcare-des --config configs/demand-aligned-staffing.yaml --replications 20 \
   --output outputs/demand_aligned_staffing.csv
 ```
 
-The CLI prints a JSON summary and stores replication-level results as CSV.
+## Launch the digital-twin dashboard
+
+```bash
+streamlit run app.py
+```
+
+The dashboard lets users change daily demand, operating hours, MRI machines, radiographers, radiologists, no-show rates and replication counts. It displays mean waiting time, system time, throughput, SLA completion and a ranked capacity search.
+
+Docker users can run:
+
+```bash
+docker build -t healthcare-des .
+docker run --rm -p 8501:8501 healthcare-des
+```
+
+## Synthetic demand generation
+
+```python
+from healthcare_des.synthetic import DemandPattern, generate_daily_demand
+
+frame = generate_daily_demand(
+    DemandPattern(days=90, base_daily_demand=70, seed=17)
+)
+```
+
+The generator produces privacy-safe demand with weekday/weekend variation, a Monday surge, trend and Poisson noise.
+
+## Capacity optimisation
+
+```python
+from healthcare_des.model import ScenarioConfig
+from healthcare_des.optimisation import search_capacity
+
+candidates = search_capacity(
+    ScenarioConfig(days=14, daily_demand=70),
+    replications=8,
+)
+print(candidates.head())
+```
+
+The optimiser uses an auditable objective based on illustrative machine/staff capacity weights and a waiting-time penalty. These weights are deliberately transparent and should be replaced with locally validated costs before operational use.
+
+## Monte Carlo and sensitivity analysis
+
+```python
+from healthcare_des.model import ScenarioConfig
+from healthcare_des.sensitivity import monte_carlo, one_at_a_time
+
+base = ScenarioConfig(days=14)
+uncertainty = monte_carlo(base, samples=50, replications=4)
+sensitivity = one_at_a_time(base, replications=10)
+```
+
+These analyses measure how uncertainty in demand, no-shows and scan duration propagates to patient-flow KPIs.
 
 ## Calibrate with NHS England data
 
@@ -91,7 +149,8 @@ healthcare-des --config configs/baseline.yaml \
 - total queueing time;
 - percentage completed within 120 minutes;
 - no-show counts;
-- scenario-level demand and capacity comparison.
+- scenario-level demand and capacity comparison;
+- uncertainty distributions and capacity-search objective scores.
 
 ## Research validation targets
 
@@ -107,29 +166,35 @@ These are treated as **research validation targets**, not automatically claimed 
 
 ```text
 .
-├── configs/                    # reproducible scenario definitions
-├── data/                       # public-data instructions; raw data excluded
-├── scripts/                    # NHS data preparation utilities
-├── src/healthcare_des/         # simulation engine, config and CLI
-├── tests/                      # deterministic model tests
-├── .github/workflows/ci.yml    # Python 3.10–3.12 CI
+├── app.py                       # Streamlit digital-twin dashboard
+├── configs/                     # reproducible scenario definitions
+├── data/                        # public-data instructions; raw data excluded
+├── scripts/                     # NHS data preparation utilities
+├── src/healthcare_des/          # simulation, synthetic demand, optimisation
+├── tests/                       # deterministic and extension tests
+├── .github/workflows/ci.yml     # Python 3.10–3.12 CI
+├── .pre-commit-config.yaml
+├── Dockerfile
 ├── CITATION.cff
 ├── LICENSE
 └── pyproject.toml
 ```
 
-## Testing
+## Testing and quality
 
 ```bash
-ruff check src tests scripts
+ruff check src tests scripts app.py
 pytest --cov=healthcare_des --cov-report=term-missing
+pre-commit run --all-files
 ```
 
 ## Assumptions and limitations
 
 The implementation focuses on MRI rather than the entire radiology service. It uses public aggregate data and configurable distributions rather than patient-level records. Night demand, shared-resource effects, costs, clinical outcomes and staff interactions require additional evidence before operational use.
 
-This project is a research and decision-support framework. It is not a clinical recommendation system.
+The optimisation weights and Monte Carlo parameter ranges are illustrative. They must be calibrated using local operational evidence before decision-making.
+
+This project is a research and decision-support framework. It is not a clinical recommendation or production scheduling system.
 
 ## Citation
 
@@ -147,7 +212,7 @@ This project is a research and decision-support framework. It is not a clinical 
 
 ## Search topics
 
-`healthcare simulation` · `discrete event simulation` · `SimPy` · `MRI capacity planning` · `patient flow` · `queueing theory` · `operations research` · `hospital analytics` · `healthcare digital twin` · `resource optimisation` · `NHS diagnostics`
+`healthcare simulation` · `discrete event simulation` · `SimPy` · `MRI capacity planning` · `patient flow` · `queueing theory` · `operations research` · `hospital analytics` · `healthcare digital twin` · `resource optimisation` · `Monte Carlo simulation` · `sensitivity analysis` · `NHS diagnostics` · `Streamlit`
 
 ## Author
 
