@@ -1,0 +1,10 @@
+# Default repository owner
+* @sauravsingla
+
+# Sensitive governance and automation paths
+/.github/ @sauravsingla
+/SECURITY.md @sauravsingla
+/CODE_OF_CONDUCT.md @sauravsingla
+/SUPPORT.md @sauravsingla
+/pyproject.toml @sauravsingla
+/Dockerfile @sauravsingla
