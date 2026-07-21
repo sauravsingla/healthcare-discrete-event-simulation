@@ -23,10 +23,33 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install build twine
+      - name: Validate tag version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          package_version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          tag_version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          if tag_version != package_version:
+              raise SystemExit(
+                  f"Release tag v{tag_version} does not match package version {package_version}"
+              )
+          print(f"Validated release version {package_version}")
+          PY
       - name: Build distributions
         run: python -m build
       - name: Validate distributions
         run: twine check dist/*
+      - name: Verify wheel installation
+        run: |
+          python -m venv /tmp/healthcare-des-release-check
+          /tmp/healthcare-des-release-check/bin/pip install dist/*.whl
+          /tmp/healthcare-des-release-check/bin/python -c "import healthcare_des; print(healthcare_des.__version__)"
+          /tmp/healthcare-des-release-check/bin/healthcare-des --help
+          /tmp/healthcare-des-release-check/bin/healthcare-des-advanced-benchmark --help
       - name: Upload release distributions
         uses: actions/upload-artifact@v4
         with:
