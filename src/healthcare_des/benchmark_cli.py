@@ -7,6 +7,8 @@ from pathlib import Path
 
 from .benchmark import benchmark_scenarios
 from .config import load_config
+from .reporting import save_latex_table, save_pdf_report, save_scenario_figure
+from .tracking import write_manifest
 
 
 def positive_int(value: str) -> int:
@@ -23,6 +25,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", required=True, help="Path to baseline scenario YAML")
     parser.add_argument("--replications", type=positive_int, default=20)
     parser.add_argument("--output", default="outputs/benchmark.csv")
+    parser.add_argument(
+        "--research-outputs",
+        action="store_true",
+        help="Also generate a PDF report, publication figure, LaTeX table and manifest",
+    )
     return parser
 
 
@@ -36,6 +43,23 @@ def main() -> None:
     results = benchmark_scenarios(base, replications=args.replications)
     output.parent.mkdir(parents=True, exist_ok=True)
     results.to_csv(output, index=False)
+
+    generated = [str(output)]
+    if args.research_outputs:
+        stem = output.with_suffix("")
+        generated.extend(
+            [
+                str(save_scenario_figure(results, stem.parent / f"{stem.name}_tradeoff.png")),
+                str(save_latex_table(results, stem.parent / f"{stem.name}_table.tex")),
+                str(save_pdf_report(results, stem.parent / f"{stem.name}_report.pdf")),
+            ]
+        )
+        write_manifest(
+            stem.parent / f"{stem.name}_manifest.json",
+            base,
+            replications=args.replications,
+            output_files=generated,
+        )
 
     columns = [
         "name",
