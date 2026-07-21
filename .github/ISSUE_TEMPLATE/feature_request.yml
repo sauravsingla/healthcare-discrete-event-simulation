@@ -1,0 +1,66 @@
+name: Feature request
+description: Propose a simulation, analysis, CLI, dashboard, documentation, or reproducibility improvement
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the operational or research need before proposing implementation details. Do not include confidential or patient-identifiable information.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or decision need
+      description: What limitation, research question, or operational decision would this feature address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed capability
+      description: Describe the expected behaviour and user-facing interface.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Simulation engine
+        - Demand or capacity modelling
+        - Calibration or validation
+        - Optimisation or sensitivity analysis
+        - CLI or configuration
+        - Dashboard or visualisation
+        - Testing, CI or packaging
+        - Documentation or research reproducibility
+    validations:
+      required: true
+  - type: textarea
+    id: assumptions
+    attributes:
+      label: Assumptions, units, and constraints
+      description: State proposed distributions, time units, resource rules, priorities, horizons, or data requirements.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Acceptance and validation criteria
+      description: Explain how correctness, reproducibility, and backwards compatibility could be tested.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: integrity
+    attributes:
+      label: Data and research integrity
+      options:
+        - label: This request does not require confidential or patient-identifiable information to be shared publicly.
+          required: true
+        - label: Any proposed external data or methods can be cited and used under appropriate terms.
+          required: true
