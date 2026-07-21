@@ -1,0 +1,13 @@
+name: baseline_8_hour
+days: 30
+operating_hours: 8
+daily_demand: 70.0
+outpatient_share: 0.57
+inpatient_share: 0.2408
+emergency_share: 0.1892
+no_show_rate: 0.08
+mri_machines: 4
+clerks: 1
+radiographers: 4
+radiologists: 1
+seed: 17
