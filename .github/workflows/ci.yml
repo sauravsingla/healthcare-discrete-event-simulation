@@ -16,7 +16,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -32,12 +32,41 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
       - name: Lint
-        run: ruff check src tests scripts
+        run: ruff check src tests scripts examples
       - name: Type check
         run: mypy src/healthcare_des
       - name: Test with coverage threshold
         run: pytest --cov=healthcare_des --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+      - name: Advanced-engine smoke test
+        run: |
+          python - <<'PY'
+          from dataclasses import replace
+          from healthcare_des import AdvancedScenarioConfig, run_advanced_once
+
+          config = replace(
+              AdvancedScenarioConfig(),
+              days=1,
+              daily_demand=8,
+              mri_machines=2,
+              bootstrap_samples=100,
+          )
+          result, patients, state = run_advanced_once(config)
+          assert result.booked >= result.cancelled
+          assert result.arrivals == result.completed + result.abandoned + result.unfinished
+          assert not patients.empty
+          assert not state.empty
+          print(result)
+          PY
       - name: Build package
         run: python -m build
       - name: Validate package metadata
         run: twine check dist/*
+      - name: Upload coverage and distributions
+        if: always() && matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-artifacts
+          path: |
+            coverage.xml
+            dist/*
+          if-no-files-found: warn
