@@ -197,14 +197,27 @@ docker run --rm -p 8501:8501 healthcare-des
 ## Testing and quality
 
 ```bash
+pre-commit run --all-files
 ruff check src tests scripts examples
 mypy src/healthcare_des
 pytest --cov=healthcare_des --cov-report=term-missing --cov-fail-under=80
 python -m build
 twine check dist/*
+
+healthcare-des --help
+healthcare-des-benchmark --help
+healthcare-des-reproduce --help
+healthcare-des-advanced-benchmark --help
+
+python scripts/benchmark_advanced.py \
+  --days 1 \
+  --replications 1 \
+  --output outputs/advanced_benchmark_ci.csv
+
+docker build -t healthcare-des:ci .
 ```
 
-CI runs these checks on Python 3.10, 3.11 and 3.12, executes an advanced-engine accounting smoke test, and uploads coverage and distribution artifacts from Python 3.12.
+CI runs the Python quality checks on Python 3.10, 3.11 and 3.12. It also executes all installed CLI entry points, validates an advanced-engine accounting smoke test, runs a bounded benchmark with output assertions, builds and installs the generated wheel in a clean environment, builds the Docker image, starts the container, and verifies the Streamlit health endpoint. Coverage, benchmark outputs and distributions are uploaded from Python 3.12.
 
 A separate tag-triggered release workflow builds and validates source and wheel distributions. It deliberately does not publish to a package index without repository secrets and an explicit release decision.
 
