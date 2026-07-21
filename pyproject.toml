@@ -48,6 +48,7 @@ dev = [
   "pandas-stubs>=2.1",
   "build>=1.2,<2",
   "twine>=5,<7",
+  "pre-commit>=3.7,<5",
 ]
 all = ["streamlit>=1.36,<2"]
 
