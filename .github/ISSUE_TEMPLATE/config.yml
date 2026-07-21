@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security or privacy concern
+    url: https://github.com/sauravsingla/healthcare-discrete-event-simulation/security/policy
+    about: Report vulnerabilities or sensitive-data concerns privately; do not open a public issue.
+  - name: Usage and research discussion
+    url: https://github.com/sauravsingla/healthcare-discrete-event-simulation/discussions
+    about: Ask modelling, configuration, interpretation, or research-method questions.
