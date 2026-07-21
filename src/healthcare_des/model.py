@@ -38,14 +38,42 @@ class ScenarioConfig:
     seed: int = 17
 
     def validate(self) -> None:
-        shares = self.outpatient_share + self.inpatient_share + self.emergency_share
-        if not np.isclose(shares, 1.0, atol=1e-6):
-            raise ValueError(f"Patient shares must sum to 1.0, got {shares:.6f}")
-        for field in ("days", "operating_hours", "mri_machines", "clerks", "radiographers", "radiologists"):
+        shares = (self.outpatient_share, self.inpatient_share, self.emergency_share)
+        if any(share < 0 for share in shares):
+            raise ValueError("Patient shares must be non-negative")
+        share_total = sum(shares)
+        if not np.isclose(share_total, 1.0, atol=1e-6):
+            raise ValueError(f"Patient shares must sum to 1.0, got {share_total:.6f}")
+
+        for field in ("days", "mri_machines", "clerks", "radiographers", "radiologists"):
             if getattr(self, field) <= 0:
                 raise ValueError(f"{field} must be positive")
+        if not 0 < self.operating_hours <= 24:
+            raise ValueError("operating_hours must be in (0, 24]")
+        if self.daily_demand <= 0:
+            raise ValueError("daily_demand must be positive")
         if not 0 <= self.no_show_rate < 1:
             raise ValueError("no_show_rate must be in [0, 1)")
+
+        if self.reception_mean <= 0:
+            raise ValueError("reception_mean must be positive")
+        if not 0 <= self.preparation_low <= self.preparation_mode <= self.preparation_high:
+            raise ValueError(
+                "Preparation times must satisfy 0 <= low <= mode <= high"
+            )
+        if self.scan_mean <= 0:
+            raise ValueError("scan_mean must be positive")
+        if any(
+            value < 0
+            for value in (
+                self.scan_sd_outpatient,
+                self.scan_sd_inpatient,
+                self.scan_sd_emergency,
+            )
+        ):
+            raise ValueError("Scan standard deviations must be non-negative")
+        if not 0 <= self.report_low <= self.report_high:
+            raise ValueError("Report times must satisfy 0 <= low <= high")
 
 
 @dataclass(frozen=True)
