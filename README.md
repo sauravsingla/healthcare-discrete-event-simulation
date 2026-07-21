@@ -1,119 +1,135 @@
 # Healthcare Discrete-Event Simulation
 
-A reproducible Python implementation of healthcare demand and capacity modelling for MRI services using discrete-event simulation, queue analysis, resource-utilisation measurement and scenario comparison.
+[![CI](https://github.com/sauravsingla/healthcare-discrete-event-simulation/actions/workflows/ci.yml/badge.svg)](https://github.com/sauravsingla/healthcare-discrete-event-simulation/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![SimPy](https://img.shields.io/badge/SimPy-discrete--event%20simulation-2C5F2D)](https://simpy.readthedocs.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://img.shields.io/badge/DOI-10.4236%2Fojmsi.2020.84007-blue)](https://doi.org/10.4236/ojmsi.2020.84007)
 
-## Research Basis
+An open-source Python framework for **healthcare demand forecasting, MRI capacity planning, patient-flow simulation, queue analysis, resource utilisation and scenario comparison** using SimPy.
 
-This repository is based on the published paper:
+This repository provides a reproducible implementation and extension of:
 
-**Saurav Singla (2020), “Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation,” Open Journal of Modelling and Simulation, 8, 88–107.**
+> Saurav Singla (2020), **Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation**, *Open Journal of Modelling and Simulation*, 8, 88–107.
 
-- DOI: https://doi.org/10.4236/ojmsi.2020.84007
-- Paper: https://www.scirp.org/journal/paperinformation?paperid=102869
-- Presentation: https://www.slideshare.net/slideshow/demand-capacity-modelling-in-healthcare/238573051
+- [Research paper](https://www.scirp.org/journal/paperinformation?paperid=102869)
+- [Presentation](https://www.slideshare.net/slideshow/demand-capacity-modelling-in-healthcare/238573051)
+- [DOI](https://doi.org/10.4236/ojmsi.2020.84007)
 
-The original study used discrete-event simulation to examine MRI patient flow, demand, staffing, queueing, resource allocation, no-shows and operating-hour scenarios in an NHS radiology setting.
+## Why this project
 
-## Problem Statement
+Radiology services must balance stochastic patient demand against constrained MRI scanners, radiographers, radiologists, clerical capacity and operating hours. A mismatch can create long queues, poor throughput and underused or overloaded resources.
 
-Radiology services must balance uncertain patient demand with constrained MRI machines, radiographers, radiologists, clerical staff and operating hours. Poor alignment between demand and capacity can produce long queues, extended patient time in the system, underused resources and reduced throughput.
+The model allows researchers and operational teams to test alternative configurations without disrupting a live healthcare service.
 
-This project aims to provide an open and reproducible framework for testing alternative demand-and-capacity scenarios without disrupting a real healthcare operation.
+## Implemented model
 
-## Model Scope
+The Python simulation currently includes:
 
-The model represents:
+- outpatient, inpatient and emergency patient classes;
+- emergency-priority MRI access through `simpy.PriorityResource`;
+- reception, preparation, MRI scanning and report-interpretation stages;
+- configurable scanners, clerks, radiographers and radiologists;
+- stochastic arrivals, no-shows and service-time distributions;
+- 8-hour, 16-hour and 24-hour scenarios;
+- repeated experiments with deterministic random seeds;
+- CSV outputs for throughput, waiting time, system time and SLA performance;
+- calibration from official NHS England monthly diagnostic activity data.
 
-- Outpatient, inpatient and emergency patient classes
-- Priority handling for emergency patients
-- Reception, MRI waiting room, scanning and report-interpretation stages
-- MRI machines, radiographers, radiologists and clerical resources
-- Morning, evening and night shifts
-- Stochastic patient arrivals and service times
-- No-shows and overbooking strategies
-- 8-hour, 16-hour and 24-hour operating scenarios
-- Dedicated-resource and staffing-allocation scenarios
+## Public external dataset
 
-## Key Performance Indicators
+The data workflow uses the official NHS England **Monthly Diagnostic Waiting Times and Activity** collection, which publishes provider and commissioner activity for key diagnostic tests including MRI:
 
-The simulation is designed to measure:
+https://www.england.nhs.uk/statistics/statistical-work-areas/diagnostics-waiting-times-and-activity/monthly-diagnostics-waiting-times-and-activity/
 
-- Patient throughput
-- Average waiting time
-- Average time in the system
-- Queue length and queueing time
-- MRI utilisation
-- Radiographer, radiologist and clerk utilisation
-- Percentage of patients completing the system within 120 minutes
-- Scenario-level demand and capacity balance
+No patient-level, confidential or employer-owned data is stored in this repository. See [`data/README.md`](data/README.md) for the reproducible preparation process.
 
-## Findings Reported in the Paper
+## Installation
 
-The published study compared 11 scenarios. The strongest scenarios used dedicated resources and demand-aligned staffing. In the reported results:
-
-- MRI waiting-room queue time decreased from approximately 17 minutes to 5 minutes
-- Average outpatient time in the system decreased by approximately 20 minutes
-- Outpatient throughput increased while maintaining reasonable system times
-- Resource utilisation and patient-flow bottlenecks became visible through simulation
-
-These figures are results from the original study and will be treated as validation targets rather than assumed outputs of the Python implementation.
-
-## Planned Python Implementation
-
-The repository will use:
-
-- **SimPy** for discrete-event simulation
-- **NumPy** and **SciPy** for stochastic distributions and statistical analysis
-- **Pandas** for experiment outputs
-- **Matplotlib** or **Plotly** for result visualisation
-- **Pytest** for model and regression testing
-- **YAML** configuration for reproducible scenarios
-- **GitHub Actions** for continuous integration
-
-## Planned Repository Structure
-
-```text
-healthcare-discrete-event-simulation/
-├── README.md
-├── LICENSE
-├── CITATION.cff
-├── pyproject.toml
-├── configs/
-│   ├── baseline.yaml
-│   ├── extended-hours.yaml
-│   └── staffing-scenario.yaml
-├── src/
-│   └── healthcare_des/
-│       ├── model.py
-│       ├── patients.py
-│       ├── resources.py
-│       ├── scenarios.py
-│       ├── metrics.py
-│       └── validation.py
-├── notebooks/
-├── tests/
-├── figures/
-└── docs/
+```bash
+git clone https://github.com/sauravsingla/healthcare-discrete-event-simulation.git
+cd healthcare-discrete-event-simulation
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -e ".[dev,analysis]"
 ```
 
-## Reproducibility and Data
+## Run a scenario
 
-The original study used a combination of historical demand, published evidence and modelling assumptions. This open-source implementation will use synthetic or publicly shareable data only.
+```bash
+healthcare-des --config configs/baseline.yaml --replications 20
+```
 
-No confidential NHS, employer or patient-level data will be published in this repository.
+Run the extended-hours and demand-aligned staffing experiments:
 
-Model parameters will be clearly labelled as one of:
+```bash
+healthcare-des --config configs/extended-hours.yaml --replications 20 \
+  --output outputs/extended_hours.csv
 
-- Reported in the paper
-- Derived from public literature
-- Synthetic
-- User configurable
+healthcare-des --config configs/demand-aligned-staffing.yaml --replications 20 \
+  --output outputs/demand_aligned_staffing.csv
+```
 
-## Limitations
+The CLI prints a JSON summary and stores replication-level results as CSV.
 
-The original study was limited to MRI services, used some assumed demand—particularly at night—and did not model all interactions across the wider radiology department. Shared-resource effects and cost optimisation were also outside its main scope.
+## Calibrate with NHS England data
 
-This implementation will preserve those limitations transparently and provide extension points for broader radiology services, cost modelling, optimisation, agent-based modelling and digital-twin research.
+After downloading and extracting an official NHS diagnostics CSV:
+
+```bash
+python scripts/prepare_nhs_diagnostics.py path/to/nhs_extract.csv
+
+healthcare-des --config configs/baseline.yaml \
+  --demand-csv data/processed/nhs_mri_activity.csv \
+  --replications 20
+```
+
+## Key performance indicators
+
+- completed patients and throughput per day;
+- mean and 90th-percentile patient time in system;
+- total queueing time;
+- percentage completed within 120 minutes;
+- no-show counts;
+- scenario-level demand and capacity comparison.
+
+## Research validation targets
+
+The original paper compared 11 operational scenarios. Its reported findings included:
+
+- MRI waiting-room queue time reducing from approximately 17 minutes to 5 minutes;
+- outpatient time in the system reducing by approximately 20 minutes;
+- increased outpatient throughput under dedicated-resource and demand-aligned staffing scenarios.
+
+These are treated as **research validation targets**, not automatically claimed as reproduced results. Python outputs must be compared transparently against the original assumptions and public-data calibration.
+
+## Repository structure
+
+```text
+.
+├── configs/                    # reproducible scenario definitions
+├── data/                       # public-data instructions; raw data excluded
+├── scripts/                    # NHS data preparation utilities
+├── src/healthcare_des/         # simulation engine, config and CLI
+├── tests/                      # deterministic model tests
+├── .github/workflows/ci.yml    # Python 3.10–3.12 CI
+├── CITATION.cff
+├── LICENSE
+└── pyproject.toml
+```
+
+## Testing
+
+```bash
+ruff check src tests scripts
+pytest --cov=healthcare_des --cov-report=term-missing
+```
+
+## Assumptions and limitations
+
+The implementation focuses on MRI rather than the entire radiology service. It uses public aggregate data and configurable distributions rather than patient-level records. Night demand, shared-resource effects, costs, clinical outcomes and staff interactions require additional evidence before operational use.
+
+This project is a research and decision-support framework. It is not a clinical recommendation system.
 
 ## Citation
 
@@ -129,13 +145,13 @@ This implementation will preserve those limitations transparently and provide ex
 }
 ```
 
-## Status
+## Search topics
 
-This repository is under active development. The first milestone is a validated Python reproduction of the baseline MRI patient-flow model and selected scenarios from the published study.
+`healthcare simulation` · `discrete event simulation` · `SimPy` · `MRI capacity planning` · `patient flow` · `queueing theory` · `operations research` · `hospital analytics` · `healthcare digital twin` · `resource optimisation` · `NHS diagnostics`
 
 ## Author
 
 **Saurav Singla**
 
-- LinkedIn: https://www.linkedin.com/in/sauravsingla008/
-- ORCID: https://orcid.org/0000-0002-6404-3988
+- [LinkedIn](https://www.linkedin.com/in/sauravsingla008/)
+- [ORCID](https://orcid.org/0000-0002-6404-3988)
