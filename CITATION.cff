@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated paper and this repository."
+title: "Healthcare Discrete-Event Simulation"
+type: software
+authors:
+  - family-names: Singla
+    given-names: Saurav
+version: 0.1.0
+date-released: 2026-07-21
+repository-code: "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
+license: MIT
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Singla
+      given-names: Saurav
+  title: "Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation"
+  journal: "Open Journal of Modelling and Simulation"
+  volume: 8
+  pages: 88-107
+  year: 2020
+  doi: "10.4236/ojmsi.2020.84007"
