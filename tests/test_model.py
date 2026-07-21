@@ -44,6 +44,44 @@ def test_invalid_patient_shares_are_rejected() -> None:
         run_once(replace(small_config(), outpatient_share=0.9))
 
 
+def test_negative_patient_share_is_rejected() -> None:
+    config = replace(
+        small_config(),
+        outpatient_share=-0.1,
+        inpatient_share=0.5,
+        emergency_share=0.6,
+    )
+    with pytest.raises(ValueError, match="non-negative"):
+        run_once(config)
+
+
+@pytest.mark.parametrize("daily_demand", [0.0, -1.0])
+def test_daily_demand_must_be_positive(daily_demand: float) -> None:
+    with pytest.raises(ValueError, match="daily_demand must be positive"):
+        run_once(replace(small_config(), daily_demand=daily_demand))
+
+
+@pytest.mark.parametrize("operating_hours", [0, 25])
+def test_operating_hours_must_fit_within_a_day(operating_hours: int) -> None:
+    with pytest.raises(ValueError, match="operating_hours must be in"):
+        run_once(replace(small_config(), operating_hours=operating_hours))
+
+
+def test_invalid_preparation_distribution_is_rejected() -> None:
+    with pytest.raises(ValueError, match="Preparation times"):
+        run_once(replace(small_config(), preparation_low=7, preparation_mode=5))
+
+
+def test_negative_scan_variability_is_rejected() -> None:
+    with pytest.raises(ValueError, match="standard deviations"):
+        run_once(replace(small_config(), scan_sd_emergency=-1))
+
+
+def test_invalid_report_distribution_is_rejected() -> None:
+    with pytest.raises(ValueError, match="Report times"):
+        run_once(replace(small_config(), report_low=15, report_high=10))
+
+
 def test_replication_count_must_be_positive() -> None:
     with pytest.raises(ValueError, match="positive"):
         run_replications(small_config(), replications=0)
