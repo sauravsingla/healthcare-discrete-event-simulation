@@ -1,0 +1,78 @@
+name: Bug report
+description: Report a reproducible defect in simulation, packaging, CLI, dashboard, or documentation
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Do not include patient-identifiable, confidential, credential, or employer-owned information.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem summary
+      description: Describe the observed problem and its impact.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include the smallest command, configuration, or code sample that reproduces the issue.
+      placeholder: |
+        1. Install ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include concise logs or traceback text with sensitive information removed.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: healthcare-des version or commit
+      placeholder: 0.4.0 or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: 3.12.4
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system
+      placeholder: Ubuntu 24.04, macOS 15, Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: simulation
+    attributes:
+      label: Simulation context
+      description: For model defects, provide seed, horizon, warm-up, termination policy, demand, capacity, and relevant configuration values.
+  - type: checkboxes
+    id: integrity
+    attributes:
+      label: Data and reproducibility confirmation
+      options:
+        - label: I removed confidential and patient-identifiable information.
+          required: true
+        - label: I used public, synthetic, or properly licensed inputs.
+          required: true
+        - label: I checked that this issue is reproducible with the supplied steps.
+          required: true
