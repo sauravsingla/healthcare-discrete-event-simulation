@@ -26,6 +26,48 @@ def test_replication_produces_valid_metrics() -> None:
     assert summarise(results)["throughput_per_day"] > 0
 
 
+def test_stage_waits_sum_to_total_wait() -> None:
+    _, patients = run_once(small_config())
+    stage_total = patients[
+        [
+            "reception_wait_minutes",
+            "preparation_wait_minutes",
+            "mri_wait_minutes",
+            "reporting_wait_minutes",
+        ]
+    ].sum(axis=1)
+    pd.testing.assert_series_equal(
+        patients["wait_minutes"], stage_total, check_names=False
+    )
+
+
+def test_resource_utilisation_metrics_are_valid() -> None:
+    result, _ = run_once(small_config())
+    utilisation = (
+        result.clerk_utilisation_pct,
+        result.radiographer_utilisation_pct,
+        result.mri_utilisation_pct,
+        result.radiologist_utilisation_pct,
+    )
+    assert all(0 <= value <= 100 for value in utilisation)
+    assert result.mri_utilisation_pct > 0
+
+
+def test_summary_includes_diagnostic_metrics() -> None:
+    summary = summarise(run_replications(small_config(), replications=2))
+    expected = {
+        "mean_reception_wait_minutes",
+        "mean_preparation_wait_minutes",
+        "mean_mri_wait_minutes",
+        "mean_reporting_wait_minutes",
+        "clerk_utilisation_pct",
+        "radiographer_utilisation_pct",
+        "mri_utilisation_pct",
+        "radiologist_utilisation_pct",
+    }
+    assert expected <= summary.keys()
+
+
 def test_emergency_priority_configuration_runs() -> None:
     config = replace(
         small_config(),
