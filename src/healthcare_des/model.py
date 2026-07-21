@@ -26,7 +26,7 @@ class ScenarioConfig:
     inpatient_share: float = 0.2408
     emergency_share: float = 0.1892
     no_show_rate: float = 0.08
-    hourly_arrival_profile: tuple[float, ...] = DEFAULT_HOURLY_PROFILE
+    hourly_arrival_profile: tuple[float, ...] = ()
     appointment_interval_minutes: int = 15
     appointment_arrival_sd_minutes: float = 8.0
     mri_machines: int = 4
@@ -70,9 +70,7 @@ class ScenarioConfig:
             raise ValueError("daily_demand must be positive")
         if not 0 <= self.no_show_rate < 1:
             raise ValueError("no_show_rate must be in [0, 1)")
-        if len(self.hourly_arrival_profile) != self.operating_hours:
-            raise ValueError("hourly_arrival_profile length must equal operating_hours")
-        if any(value < 0 for value in self.hourly_arrival_profile) or sum(self.hourly_arrival_profile) <= 0:
+        if self.hourly_arrival_profile and (any(value < 0 for value in self.hourly_arrival_profile) or sum(self.hourly_arrival_profile) <= 0):
             raise ValueError("hourly_arrival_profile must contain non-negative demand weights")
         if self.appointment_interval_minutes <= 0:
             raise ValueError("appointment_interval_minutes must be positive")
@@ -254,7 +252,8 @@ class MRIModel:
     def source(self):
         total_days = self.config.warmup_days + self.config.days
         open_minutes = self.config.operating_hours * 60
-        profile = np.asarray(self.config.hourly_arrival_profile, dtype=float)
+        raw_profile = np.asarray(self.config.hourly_arrival_profile or DEFAULT_HOURLY_PROFILE, dtype=float)
+        profile = np.interp(np.linspace(0, 1, self.config.operating_hours), np.linspace(0, 1, len(raw_profile)), raw_profile)
         profile = profile / profile.sum()
         outpatient_daily = self.config.daily_demand * self.config.outpatient_share
         unscheduled_daily = self.config.daily_demand * (self.config.inpatient_share + self.config.emergency_share)
