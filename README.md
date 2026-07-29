@@ -5,12 +5,72 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.4236%2Fojmsi.2020.84007-blue)](https://doi.org/10.4236/ojmsi.2020.84007)
 
-An open-source Python healthcare digital twin for MRI demand forecasting, capacity planning, patient-flow simulation, queue analysis, resource utilisation, uncertainty analysis and transparent staffing optimisation.
+A research-grade Python healthcare digital twin for MRI demand forecasting, capacity planning, patient-flow simulation, queue analysis, resource utilisation, uncertainty analysis and transparent staffing optimisation.
 
 This repository provides an implementation and research extension of Saurav Singla (2020), **Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation**, *Open Journal of Modelling and Simulation*, 8, 88–107.
 
 - [Research paper](https://www.scirp.org/journal/paperinformation?paperid=102869)
 - [DOI](https://doi.org/10.4236/ojmsi.2020.84007)
+- [Validation protocol](docs/VALIDATION.md)
+- [Engine guide](docs/ENGINE_GUIDE.md)
+- [Validation status](docs/VALIDATION_STATUS.md)
+
+<p align="center">
+  <img src="docs/assets/dashboard-preview.svg" alt="Healthcare demand and capacity dashboard preview" width="920">
+</p>
+
+## Why this project matters
+
+Healthcare capacity decisions involve uncertain demand, patient priorities, shared resources, equipment downtime and queues that interact over time. This project converts those operational relationships into a reproducible discrete-event simulation so that alternative demand, machine, staffing and scheduling scenarios can be compared transparently before real-world implementation.
+
+## At a glance
+
+| Area | Capability |
+|---|---|
+| Demand | Outpatient, inpatient and 24-hour emergency arrivals |
+| Patient flow | Reception, preparation, MRI scanning and reporting |
+| Operational behaviour | Priorities, queues, cancellation, no-show, abandonment and unfinished patients |
+| Capacity | MRI machines, radiographers, radiologists, clerks and dynamic staffing windows |
+| Reliability | Maintenance, stochastic failure, repair and optional scan restart |
+| Experimentation | Replications, bootstrap summaries, sensitivity analysis and scenario benchmarking |
+| Delivery | Python package, four CLI entry points, Streamlit dashboard and Docker image |
+| Quality | Linting, typing, coverage, wheel validation, Docker health checks and multi-version CI |
+
+## Example decision outputs
+
+A typical experiment produces:
+
+- mean and stage-specific waiting time;
+- mean system time;
+- throughput per day;
+- completion rate and service-level attainment;
+- patient-type performance for outpatient, inpatient and emergency pathways;
+- clerk, radiographer, MRI and radiologist utilisation;
+- cancellation, no-show, abandonment and unfinished-patient counts;
+- replication-level uncertainty and 95% confidence intervals;
+- ranked capacity and staffing alternatives.
+
+Generate deterministic machine-readable example outputs with:
+
+```bash
+python examples/generate_example_outputs.py
+```
+
+This writes:
+
+```text
+outputs/example_replications.csv
+outputs/example_summary.csv
+outputs/example_capacity_candidates.csv
+```
+
+Generate benchmark tables and charts with:
+
+```bash
+python scripts/generate_readme_assets.py
+```
+
+The generated assets include runtime scaling by demand and MRI capacity. They are diagnostics of software performance, not clinical validation findings.
 
 ## Current capabilities
 
@@ -32,6 +92,39 @@ This repository provides an implementation and research extension of Saurav Sing
 - Streamlit dashboard and Docker deployment;
 - linting, type checking, coverage, package-build and release-build workflows.
 
+## Model architecture
+
+```mermaid
+flowchart LR
+    A[Booked outpatient] --> B{Advance cancellation?}
+    B -->|Yes| C[Cancelled]
+    B -->|No| D{No-show?}
+    D -->|Yes| E[No-show]
+    D -->|No| F[Actual arrival]
+    G[Inpatient arrival] --> F
+    H[Emergency arrival] --> F
+    F --> I[Reception]
+    I --> J[Preparation]
+    J --> K[Shared MRI dispatch]
+    K --> L[Reporting]
+    L --> M[Completed]
+    I -. patience exhausted .-> N[Abandoned]
+    J -. patience exhausted .-> N
+    K -. patience exhausted .-> N
+    L -. termination .-> O[Unfinished]
+```
+
+`wait_minutes` is the sum of stage queue waits. `system_minutes` includes waiting and service time. Cancellation and no-show are recorded separately from patients who enter the physical service system.
+
+## Which engine should I use?
+
+| Engine | Intended use | Status |
+|---|---|---|
+| Base engine | Original YAML-driven workflow, standard scenario comparison and dashboard | Maintained for compatibility and straightforward experiments |
+| Advanced engine | Rich lifecycle accounting, hourly demand, dynamic staffing, downtime, appointment schedules and configurable draining | Recommended for new research extensions |
+
+See [docs/ENGINE_GUIDE.md](docs/ENGINE_GUIDE.md) for the detailed distinction and migration guidance.
+
 ## Installation
 
 ```bash
@@ -42,7 +135,7 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e ".[dev,dashboard]"
 ```
 
-## Corrected advanced engine
+## Advanced engine quick start
 
 ```python
 from dataclasses import replace
@@ -68,23 +161,7 @@ assert result.arrivals == result.completed + result.abandoned + result.unfinishe
 
 A complete example is available in [`examples/advanced_workflow.py`](examples/advanced_workflow.py).
 
-### Patient lifecycle
-
-```text
-booked outpatient
-  -> advance cancellation OR expected arrival
-  -> no-show OR actual arrival
-actual arrival / inpatient / emergency
-  -> reception
-  -> preparation
-  -> shared MRI dispatch
-  -> reporting
-  -> completed OR abandoned OR unfinished at termination
-```
-
-`wait_minutes` is the sum of stage queue waits. `system_minutes` includes waiting and service time. Cancellation and no-show are recorded separately from patients who enter the physical service system.
-
-### Termination policies
+## Termination policies
 
 - `horizon`: stop at the measurement horizon and report unfinished patients.
 - `bounded_drain`: stop arrivals and allow up to `max_drain_minutes` for completion.
@@ -92,13 +169,11 @@ actual arrival / inpatient / emergency
 
 Use the same policy across scenarios unless termination is itself the experimental factor.
 
-## Existing command-line simulation
+## Command-line simulation
 
 ```bash
 healthcare-des --config configs/baseline.yaml --replications 20
 ```
-
-The original command-line workflow remains available for the base model and YAML scenarios.
 
 ## Multi-scenario benchmark
 
@@ -109,7 +184,7 @@ healthcare-des-benchmark \
   --output outputs/benchmark.csv
 ```
 
-For corrected-engine runtime scaling:
+For advanced-engine runtime scaling:
 
 ```bash
 python scripts/benchmark_advanced.py \
@@ -143,19 +218,22 @@ The core reconciliation identity is:
 arrivals = completed + abandoned + unfinished
 ```
 
-## Calibration and research validation
+## Verification and validation status
 
-The public-data workflow uses aggregate external data and stores no patient-level confidential or employer-owned information. See [`data/README.md`](data/README.md).
+| Area | Current status |
+|---|---|
+| Software verification | Implemented through deterministic tests, accounting checks and CI |
+| Multi-version compatibility | Tested on Python 3.10, 3.11 and 3.12 |
+| Package and CLI verification | Wheel build, clean installation and CLI smoke tests implemented |
+| Dashboard deployment verification | Docker build and Streamlit health endpoint tested in CI |
+| Repeated-experiment reproducibility | Fixed-seed and replication checks implemented |
+| Independent observational validation | Protocol available; requires authoritative external observations |
+| Exact 2020-paper reproduction | Not yet claimed while authoritative targets remain incomplete |
+| Clinical deployment validation | Must be completed locally before operational use |
 
-The repository distinguishes:
+The public-data workflow uses aggregate external data and stores no patient-level confidential or employer-owned information. Blank expected values in `data/paper_targets_template.csv` deliberately indicate that authoritative published targets have not yet been transcribed. They must not be replaced with guessed values.
 
-1. software verification;
-2. model validation against independent observations;
-3. exact paper reproduction.
-
-Blank expected values in `data/paper_targets_template.csv` deliberately indicate that authoritative published targets have not yet been transcribed. They must not be replaced with guessed values.
-
-See [`docs/VALIDATION.md`](docs/VALIDATION.md) for the complete protocol, including holdout validation, statistical equivalence, warm-up handling and reproduction decision rules.
+See [`docs/VALIDATION.md`](docs/VALIDATION.md) and [`docs/VALIDATION_STATUS.md`](docs/VALIDATION_STATUS.md) for holdout validation, statistical equivalence, warm-up handling and reproduction decision rules.
 
 ## Capacity optimisation
 
@@ -193,6 +271,8 @@ streamlit run app.py
 docker build -t healthcare-des .
 docker run --rm -p 8501:8501 healthcare-des
 ```
+
+The dashboard exposes scenario controls, KPI cards, confidence intervals, replication uncertainty, resource utilisation, patient-type performance, scenario comparison and capacity search.
 
 ## Testing and quality
 
