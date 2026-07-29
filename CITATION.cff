@@ -6,8 +6,8 @@ authors:
   - family-names: Singla
     given-names: Saurav
     orcid: "https://orcid.org/0000-0002-6404-3988"
-version: 0.4.0
-date-released: 2026-07-21
+version: 1.1.0
+date-released: 2026-07-29
 repository-code: "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
 url: "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
 license: MIT
@@ -24,9 +24,11 @@ preferred-citation:
   authors:
     - family-names: Singla
       given-names: Saurav
+      orcid: "https://orcid.org/0000-0002-6404-3988"
   journal: "Open Journal of Modelling and Simulation"
   volume: 8
   year: 2020
   start: 88
   end: 107
   doi: "10.4236/ojmsi.2020.84007"
+  url: "https://doi.org/10.4236/ojmsi.2020.84007"
