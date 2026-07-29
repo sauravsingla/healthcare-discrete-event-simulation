@@ -89,6 +89,23 @@ jobs:
           assert metadata["rows"] == 18
           print(metadata)
           PY
+      - name: Validate example output generator
+        if: matrix.python-version == '3.12'
+        run: |
+          python examples/generate_example_outputs.py
+          test -s outputs/example_replications.csv
+          test -s outputs/example_summary.csv
+          test -s outputs/example_capacity_candidates.csv
+      - name: Validate README asset generator
+        if: matrix.python-version == '3.12'
+        env:
+          MPLBACKEND: Agg
+        run: |
+          python scripts/generate_readme_assets.py
+          test -s outputs/readme_advanced_benchmark.csv
+          test -s docs/assets/generated/runtime_by_demand.png
+          test -s docs/assets/generated/runtime_by_mri_capacity.png
+          test -s docs/assets/generated/output_growth_by_demand.png
       - name: Build package
         run: python -m build
       - name: Validate package metadata
@@ -110,6 +127,11 @@ jobs:
             coverage.xml
             outputs/advanced_benchmark_ci.csv
             outputs/advanced_benchmark_ci.json
+            outputs/example_replications.csv
+            outputs/example_summary.csv
+            outputs/example_capacity_candidates.csv
+            outputs/readme_advanced_benchmark.csv
+            docs/assets/generated/*.png
             dist/*
           if-no-files-found: warn
 
