@@ -94,11 +94,15 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
         required=False,
     )
 
-    mri_mask = frame[test_col].astype(str).str.contains(
-        MRI_PATTERN,
-        case=False,
-        na=False,
-        regex=True,
+    mri_mask = (
+        frame[test_col]
+        .astype(str)
+        .str.contains(
+            MRI_PATTERN,
+            case=False,
+            na=False,
+            regex=True,
+        )
     )
     mri = frame[mri_mask].copy()
     if mri.empty:
@@ -125,9 +129,9 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
         }
     )
     if waiting_list_col is not None:
-        result["mri_waiting_list"] = pd.to_numeric(
-            mri[waiting_list_col], errors="coerce"
-        ).fillna(0.0)
+        result["mri_waiting_list"] = pd.to_numeric(mri[waiting_list_col], errors="coerce").fillna(
+            0.0
+        )
 
     aggregations: dict[str, str] = {
         "provider_name": "first",
