@@ -1,0 +1,29 @@
+name: format-pr15
+
+on:
+  pull_request:
+    branches: [fix/baseline-quality-gate]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.head_ref == 'fix/issue-10-dynamic-capacity'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/issue-10-dynamic-capacity
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff
+      - run: ruff format src/healthcare_des/advanced_engine.py src/healthcare_des/advanced_model.py
+      - name: Commit formatting
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/healthcare_des/advanced_engine.py src/healthcare_des/advanced_model.py
+          git diff --cached --quiet || git commit -m 'style: apply ruff formatting'
+          git push origin HEAD:fix/issue-10-dynamic-capacity
