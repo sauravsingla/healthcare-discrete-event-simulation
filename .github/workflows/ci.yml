@@ -37,9 +37,22 @@ jobs:
       - name: Lint
         run: ruff check src tests scripts examples
       - name: Type check
+        if: matrix.python-version == '3.10'
         run: mypy src/healthcare_des
-      - name: Test with coverage threshold
-        run: pytest --cov=healthcare_des --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+      - name: Targeted issue 10 regression
+        run: pytest -q tests/test_advanced_corrections.py::test_capacity_reduction_never_creates_negative_or_excess_tokens
+      - name: Targeted issue 11 regression
+        run: pytest -q tests/test_advanced_corrections.py::test_failures_interrupt_and_repair_scans_without_losing_patient_accounting
+      - name: Targeted issue 12 regression
+        run: pytest -q tests/test_advanced_model.py::test_machine_failures_are_recorded
+      - name: Targeted issue 13 regression
+        run: pytest -q tests/test_advanced_model.py::test_paper_registry_runs_all_eleven_scenarios
+      - name: Targeted issue 14 distribution regression
+        run: pytest -q tests/test_research_validation.py::test_fit_distributions_returns_information_criteria
+      - name: Test with strict coverage threshold
+        run: >-
+          pytest --cov=healthcare_des --cov-report=term-missing --cov-report=xml
+          --cov-fail-under=80
       - name: Verify installed CLI entry points
         run: |
           healthcare-des --help

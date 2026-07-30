@@ -1,4 +1,5 @@
 """Published-scenario registry and tolerance-based reproduction runner."""
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -17,7 +18,23 @@ PAPER_SCENARIOS: dict[str, dict[str, object]] = {
     "scenario-02-extra-mri": {"mri_machines": 5},
     "scenario-03-extra-radiographer": {"radiographer_capacity": ((0, 480, 2),)},
     "scenario-04-extra-radiologist": {"radiologist_capacity": ((0, 480, 2),)},
-    "scenario-05-extended-hours": {"operating_hours": 12},
+    "scenario-05-extended-hours": {
+        "operating_hours": 12,
+        "outpatient_hourly_profile": (
+            1.2,
+            1.3,
+            1.1,
+            0.8,
+            0.7,
+            1.1,
+            1.0,
+            0.8,
+            0.6,
+            0.5,
+            0.4,
+            0.3,
+        ),
+    },
     "scenario-06-reduced-demand": {"daily_demand": 56.0},
     "scenario-07-increased-demand": {"daily_demand": 84.0},
     "scenario-08-low-no-show": {"no_show_rate": 0.04},
@@ -47,6 +64,7 @@ def run_paper_scenarios(
     rows: list[dict[str, float | str]] = []
     for name, changes in selected.items():
         config = replace(base, name=name, **_coerce_windows(changes))
+        config.validate()
         summary = summarise_advanced(run_advanced_replications(config, replications))
         rows.append({"name": name, **summary})
     return pd.DataFrame(rows)
@@ -77,6 +95,18 @@ def verify_paper_targets(
         observed = float(indexed.loc[scenario, metric])
         expected = float(row.expected)
         tolerance = float(getattr(row, "tolerance_pct", default_tolerance_pct))
-        error_pct = abs(observed - expected) / abs(expected) * 100 if expected else abs(observed) * 100
-        checks.append({"scenario": scenario, "metric": metric, "expected": expected, "observed": observed, "error_pct": error_pct, "tolerance_pct": tolerance, "passed": error_pct <= tolerance})
+        error_pct = (
+            abs(observed - expected) / abs(expected) * 100 if expected else abs(observed) * 100
+        )
+        checks.append(
+            {
+                "scenario": scenario,
+                "metric": metric,
+                "expected": expected,
+                "observed": observed,
+                "error_pct": error_pct,
+                "tolerance_pct": tolerance,
+                "passed": error_pct <= tolerance,
+            }
+        )
     return pd.DataFrame(checks)

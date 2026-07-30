@@ -39,7 +39,9 @@ def main() -> None:
     checks.to_csv(checks_path, index=False)
     save_scenario_figure(results, output_dir / "scenario_tradeoff.png")
     save_latex_table(results, output_dir / "scenario_table.tex")
-    save_pdf_report(results, output_dir / "reproduction_report.pdf", title="Paper Reproduction Report")
+    save_pdf_report(
+        results, output_dir / "reproduction_report.pdf", title="Paper Reproduction Report"
+    )
     write_manifest(
         output_dir / "manifest.json",
         config,

@@ -19,9 +19,7 @@ def positive_int(value: str) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Benchmark standard healthcare capacity scenarios"
-    )
+    parser = argparse.ArgumentParser(description="Benchmark standard healthcare capacity scenarios")
     parser.add_argument("--config", required=True, help="Path to baseline scenario YAML")
     parser.add_argument("--replications", type=positive_int, default=20)
     parser.add_argument("--output", default="outputs/benchmark.csv")

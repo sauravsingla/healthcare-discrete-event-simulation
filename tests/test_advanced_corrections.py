@@ -46,9 +46,10 @@ def test_patient_outcomes_reconcile_exactly():
     result, frame, _ = run_advanced_once(
         config(cancellation_rate=0.2, no_show_rate=0.2, abandonment_minutes=20)
     )
-    assert result.expected_arrivals == result.booked + int(
-        (frame["patient_type"] != "outpatient").sum()
-    ) - result.cancelled
+    assert (
+        result.expected_arrivals
+        == result.booked + int((frame["patient_type"] != "outpatient").sum()) - result.cancelled
+    )
     assert result.arrivals == result.completed + result.abandoned + result.unfinished
     assert set(frame["status"]).issubset(
         {"completed", "cancelled", "no_show", "abandoned", "unfinished"}
@@ -70,9 +71,7 @@ def test_capacity_reduction_never_creates_negative_or_excess_tokens():
 
 
 def test_overlapping_capacity_windows_are_not_order_dependent():
-    first = config(
-        clerk_capacity=(CapacityWindow(0, 300, 2), CapacityWindow(120, 240, 3))
-    )
+    first = config(clerk_capacity=(CapacityWindow(0, 300, 2), CapacityWindow(120, 240, 3)))
     second = replace(first, clerk_capacity=tuple(reversed(first.clerk_capacity)))
     _, _, first_state = run_advanced_once(first)
     _, _, second_state = run_advanced_once(second)
@@ -164,7 +163,10 @@ def test_horizon_and_bounded_drain_report_unfinished_consistently():
     horizon_result, _, _ = run_advanced_once(short)
     drained_result, _, _ = run_advanced_once(drained)
     assert drained_result.unfinished <= horizon_result.unfinished
-    assert horizon_result.arrivals == horizon_result.completed + horizon_result.abandoned + horizon_result.unfinished
+    assert (
+        horizon_result.arrivals
+        == horizon_result.completed + horizon_result.abandoned + horizon_result.unfinished
+    )
 
 
 def test_open_and_24_hour_state_metrics_are_both_reported():

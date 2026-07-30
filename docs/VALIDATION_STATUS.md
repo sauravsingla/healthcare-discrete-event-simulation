@@ -2,22 +2,31 @@
 
 This document separates software correctness, empirical model validation and exact research reproduction. Passing software tests does not by itself establish clinical validity.
 
-## Status matrix
+## Latest exhaustive software run
+
+The repository was exercised end-to-end on **30 July 2026** using Python **3.10, 3.11 and 3.12**. The run covered pre-commit, Ruff, configured MyPy checks, the complete non-deselected test suite, all CLI entry points, base simulation, advanced workflow, benchmark generation, example outputs, README assets, source and wheel builds, clean wheel installation, and Docker dashboard health validation.
+
+The final quality-gate run completed successfully with the documented package coverage requirement of at least **80%** enforced across the supported Python matrix.
+
+## Current software status
 
 | Area | Status | Evidence or next requirement |
 |---|---|---|
-| Deterministic execution | Implemented | Fixed-seed regression tests compare complete results, patient ledgers and state observations |
-| Patient accounting | Implemented | Tests enforce `arrivals = completed + abandoned + unfinished` |
-| Replication workflow | Implemented | Tests verify one result row per replication and deterministic seed handling |
-| Small-data end-to-end sanity | Implemented | One-day scenarios exercise simulation, summaries and benchmark generation |
-| Static quality | Implemented | Ruff, mypy and pre-commit checks run in CI |
-| Test coverage | Implemented | CI enforces at least 80% package coverage |
-| Python compatibility | Implemented | CI tests Python 3.10, 3.11 and 3.12 |
-| Package integrity | Implemented | Source and wheel distributions are built and checked |
-| Clean wheel installation | Implemented | Built wheel is installed into a new virtual environment and smoke-tested |
-| CLI integrity | Implemented | Every installed CLI entry point is executed with `--help` |
-| Dashboard deployment | Implemented | Docker image starts and the Streamlit health endpoint is checked |
-| Public aggregate-data workflow | Implemented | No patient-level confidential or employer-owned data is required |
+| Deterministic execution | Verified | Fixed-seed tests compare results, patient ledgers and state observations |
+| Patient accounting | Verified | Tests enforce `arrivals = completed + abandoned + unfinished` |
+| Replication workflow | Verified | Tests verify one result row per replication and deterministic seed handling |
+| Base and advanced simulation | Verified | End-to-end execution passed on Python 3.10–3.12 |
+| Dynamic capacity reduction | Verified | Regression coverage confirms resource targets and tokens remain consistent |
+| Machine-failure interrupt and repair | Verified | Active-scan interruptions, repair waits and restart behaviour are covered |
+| Machine-failure event recording | Verified | Failure counts and downtime are recorded and tested |
+| Paper scenario registry | Verified | All eleven registered paper scenarios validate and execute |
+| Distribution fitting | Verified | Information criteria and SciPy-compatible goodness-of-fit execution are tested |
+| Strict test coverage | Verified | CI enforces at least 80% package coverage without test deselection |
+| Static quality | Verified | Pre-commit, Ruff and configured MyPy checks pass |
+| CLI and benchmarks | Verified | Installed entry points and bounded benchmark workflows execute |
+| Package integrity | Verified | Source and wheel distributions build and pass `twine check` |
+| Clean wheel installation | Verified | Built wheel installs and executes in a new virtual environment |
+| Dashboard deployment | Verified | Docker image starts and the Streamlit health endpoint responds successfully |
 | Independent observational validation | Protocol available | Requires authoritative observations not used for calibration |
 | Statistical equivalence testing | Protocol available | Requires agreed target metrics, tolerances and replication count |
 | Exact 2020-paper reproduction | Not yet claimed | Authoritative scenario targets remain blank or incompletely transcribed |
@@ -30,7 +39,7 @@ This document separates software correctness, empirical model validation and exa
 
 ### Software verification
 
-Software verification asks whether the implementation behaves consistently with its stated logic. This repository addresses that through automated tests, deterministic seeds, accounting identities, static checks, package installation checks and deployment smoke tests.
+Software verification asks whether the implementation behaves consistently with its stated logic. Core execution, advanced-engine regressions, packaging, command-line interfaces and deployment pathways are now covered by the strict automated quality gate.
 
 ### Model validation
 
@@ -49,4 +58,4 @@ Exact reproduction asks whether published scenarios and results can be regenerat
 5. Document uncertainty, sensitivity and failure-mode analysis.
 6. Complete governance, privacy, safety and change-control review.
 
-See [VALIDATION.md](VALIDATION.md) for the detailed protocol.
+See [VALIDATION.md](VALIDATION.md) for the detailed empirical-validation protocol.

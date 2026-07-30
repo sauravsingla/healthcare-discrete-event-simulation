@@ -3,6 +3,7 @@
 The generated files are intentionally not committed as clinical findings. They are
 reproducible software examples created from illustrative default assumptions.
 """
+
 from __future__ import annotations
 
 from dataclasses import replace

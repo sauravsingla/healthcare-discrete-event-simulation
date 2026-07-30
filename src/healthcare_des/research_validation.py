@@ -1,9 +1,10 @@
 """Research-grade calibration, equivalence testing and distribution diagnostics."""
+
 from __future__ import annotations
 
-from dataclasses import asdict, replace
+from dataclasses import replace
 from pathlib import Path
-from typing import Callable, Iterable, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -75,31 +76,44 @@ def equivalence_report(
     difference = float(x.mean() - y.mean())
     se = float(np.sqrt(x.var(ddof=1) / x.size + y.var(ddof=1) / y.size))
     df_num = (x.var(ddof=1) / x.size + y.var(ddof=1) / y.size) ** 2
-    df_den = ((x.var(ddof=1) / x.size) ** 2 / (x.size - 1)) + ((y.var(ddof=1) / y.size) ** 2 / (y.size - 1))
+    df_den = ((x.var(ddof=1) / x.size) ** 2 / (x.size - 1)) + (
+        (y.var(ddof=1) / y.size) ** 2 / (y.size - 1)
+    )
     df = float(df_num / df_den) if df_den else float(x.size + y.size - 2)
     lower_t = (difference + equivalence_margin) / se if se else np.inf
     upper_t = (difference - equivalence_margin) / se if se else -np.inf
     p_lower = float(1 - stats.t.cdf(lower_t, df))
     p_upper = float(stats.t.cdf(upper_t, df))
-    pooled = np.sqrt(((x.size - 1) * x.var(ddof=1) + (y.size - 1) * y.var(ddof=1)) / (x.size + y.size - 2))
+    pooled = np.sqrt(
+        ((x.size - 1) * x.var(ddof=1) + (y.size - 1) * y.var(ddof=1)) / (x.size + y.size - 2)
+    )
     effect = difference / pooled if pooled else 0.0
     x_ci = confidence_interval(x, 1 - 2 * alpha)
     y_ci = confidence_interval(y, 1 - 2 * alpha)
     ks = stats.ks_2samp(x, y)
     return {
-        "observed_mean": float(x.mean()), "reference_mean": float(y.mean()),
-        "mean_difference": difference, "equivalence_margin": equivalence_margin,
-        "tost_p_lower": p_lower, "tost_p_upper": p_upper,
+        "observed_mean": float(x.mean()),
+        "reference_mean": float(y.mean()),
+        "mean_difference": difference,
+        "equivalence_margin": equivalence_margin,
+        "tost_p_lower": p_lower,
+        "tost_p_upper": p_upper,
         "equivalent": bool(p_lower < alpha and p_upper < alpha),
-        "observed_ci_low": x_ci[0], "observed_ci_high": x_ci[1],
-        "reference_ci_low": y_ci[0], "reference_ci_high": y_ci[1],
+        "observed_ci_low": x_ci[0],
+        "observed_ci_high": x_ci[1],
+        "reference_ci_low": y_ci[0],
+        "reference_ci_high": y_ci[1],
         "ci_overlap": bool(max(x_ci[0], y_ci[0]) <= min(x_ci[1], y_ci[1])),
-        "cohens_d": float(effect), "ks_statistic": float(ks.statistic),
+        "cohens_d": float(effect),
+        "ks_statistic": float(ks.statistic),
         "ks_pvalue": float(ks.pvalue),
     }
 
 
-def fit_distributions(values: Sequence[float], candidates: Sequence[str] = ("expon", "gamma", "lognorm", "norm", "weibull_min")) -> pd.DataFrame:
+def fit_distributions(
+    values: Sequence[float],
+    candidates: Sequence[str] = ("expon", "gamma", "lognorm", "norm", "weibull_min"),
+) -> pd.DataFrame:
     """Fit candidate scipy distributions and return KS, AD-like, AIC and BIC diagnostics."""
     sample = np.asarray(values, dtype=float)
     sample = sample[np.isfinite(sample)]
@@ -113,19 +127,31 @@ def fit_distributions(values: Sequence[float], candidates: Sequence[str] = ("exp
         params = distribution.fit(sample)
         log_likelihood = float(np.sum(distribution.logpdf(sample, *params)))
         k = len(params)
-        ks = stats.kstest(sample, name, args=params)
+        ks = stats.kstest(sample, lambda value: distribution.cdf(value, *params))
         ordered = np.sort(sample)
         cdf = np.clip(distribution.cdf(ordered, *params), 1e-12, 1 - 1e-12)
         n = sample.size
-        ad = float(-n - np.mean((2 * np.arange(1, n + 1) - 1) * (np.log(cdf) + np.log(1 - cdf[::-1]))))
-        rows.append({"distribution": name, "parameters": repr(tuple(float(p) for p in params)),
-                     "log_likelihood": log_likelihood, "aic": 2 * k - 2 * log_likelihood,
-                     "bic": k * np.log(n) - 2 * log_likelihood, "ks_statistic": float(ks.statistic),
-                     "ks_pvalue": float(ks.pvalue), "anderson_darling": ad})
+        ad = float(
+            -n - np.mean((2 * np.arange(1, n + 1) - 1) * (np.log(cdf) + np.log(1 - cdf[::-1])))
+        )
+        rows.append(
+            {
+                "distribution": name,
+                "parameters": repr(tuple(float(p) for p in params)),
+                "log_likelihood": log_likelihood,
+                "aic": 2 * k - 2 * log_likelihood,
+                "bic": k * np.log(n) - 2 * log_likelihood,
+                "ks_statistic": float(ks.statistic),
+                "ks_pvalue": float(ks.pvalue),
+                "anderson_darling": ad,
+            }
+        )
     return pd.DataFrame(rows).sort_values(["aic", "bic"]).reset_index(drop=True)
 
 
-def save_distribution_plots(values: Sequence[float], distribution_name: str, output_dir: str | Path, prefix: str = "service") -> tuple[Path, Path]:
+def save_distribution_plots(
+    values: Sequence[float], distribution_name: str, output_dir: str | Path, prefix: str = "service"
+) -> tuple[Path, Path]:
     """Save Q-Q and empirical-versus-fitted density plots."""
     import matplotlib.pyplot as plt
 
@@ -142,7 +168,11 @@ def save_distribution_plots(values: Sequence[float], distribution_name: str, out
     ax.scatter(theoretical, np.sort(sample))
     limits = [min(theoretical.min(), sample.min()), max(theoretical.max(), sample.max())]
     ax.plot(limits, limits)
-    ax.set(xlabel="Theoretical quantiles", ylabel="Empirical quantiles", title=f"Q-Q: {distribution_name}")
+    ax.set(
+        xlabel="Theoretical quantiles",
+        ylabel="Empirical quantiles",
+        title=f"Q-Q: {distribution_name}",
+    )
     fig.savefig(qq_path, bbox_inches="tight")
     plt.close(fig)
     grid = np.linspace(sample.min(), sample.max(), 300)
@@ -181,5 +211,7 @@ def calibrate_parameters(
         return loss
 
     solution = optimize.differential_evolution(objective, limits, seed=seed, polish=True)
-    fitted = replace(base, **{name: float(value) for name, value in zip(names, solution.x, strict=True)})
+    fitted = replace(
+        base, **{name: float(value) for name, value in zip(names, solution.x, strict=True)}
+    )
     return fitted, pd.DataFrame(history).sort_values("loss").reset_index(drop=True)

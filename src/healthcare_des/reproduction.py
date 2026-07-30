@@ -58,7 +58,9 @@ def verify_targets(
                 "absolute_error": absolute_error,
                 "tolerance": target.tolerance,
                 "passed": absolute_error <= target.tolerance,
-                "reason": "within tolerance" if absolute_error <= target.tolerance else "outside tolerance",
+                "reason": "within tolerance"
+                if absolute_error <= target.tolerance
+                else "outside tolerance",
             }
         )
     return pd.DataFrame(rows)

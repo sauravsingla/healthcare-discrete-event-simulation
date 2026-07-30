@@ -1,4 +1,5 @@
 """Generate reproducible benchmark tables and charts for repository documentation."""
+
 from __future__ import annotations
 
 from pathlib import Path

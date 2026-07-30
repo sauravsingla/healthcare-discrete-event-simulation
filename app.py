@@ -11,7 +11,9 @@ from healthcare_des.optimisation import search_capacity
 
 st.set_page_config(page_title="Healthcare Capacity Digital Twin", layout="wide")
 st.title("Healthcare Demand & Capacity Digital Twin")
-st.caption("A reproducible SimPy decision-support model for MRI patient flow and capacity planning.")
+st.caption(
+    "A reproducible SimPy decision-support model for MRI patient flow and capacity planning."
+)
 
 with st.sidebar:
     st.header("Scenario")
@@ -55,10 +57,16 @@ ci_columns = [
     "throughput_per_day",
     "throughput_per_day_ci95_high",
 ]
-st.dataframe(pd.DataFrame([{column: summary[column] for column in ci_columns}]), use_container_width=True)
+st.dataframe(
+    pd.DataFrame([{column: summary[column] for column in ci_columns}]), use_container_width=True
+)
 
 st.subheader("Replication uncertainty")
-st.line_chart(results.set_index("replication")[["mean_wait_minutes", "mean_system_minutes", "throughput_per_day"]])
+st.line_chart(
+    results.set_index("replication")[
+        ["mean_wait_minutes", "mean_system_minutes", "throughput_per_day"]
+    ]
+)
 
 st.subheader("Resource utilisation")
 utilisation = pd.DataFrame(
@@ -97,7 +105,9 @@ with st.expander("Replication-level results"):
 
 st.subheader("Scenario comparison")
 if st.button("Run standard scenario comparison"):
-    comparison = benchmark_scenarios(replace(config, days=14), replications=max(3, replications // 2))
+    comparison = benchmark_scenarios(
+        replace(config, days=14), replications=max(3, replications // 2)
+    )
     st.scatter_chart(
         comparison,
         x="mean_wait_minutes",
@@ -108,7 +118,10 @@ if st.button("Run standard scenario comparison"):
     st.dataframe(comparison, use_container_width=True)
 
 st.subheader("Capacity search")
-st.write("Ranks transparent machine and staffing combinations using service-level penalties and illustrative capacity weights.")
+st.write(
+    "Ranks transparent machine and staffing combinations using service-level penalties and "
+    "illustrative capacity weights."
+)
 if st.button("Run capacity search"):
     candidates = search_capacity(
         replace(config, days=14),
@@ -119,4 +132,7 @@ if st.button("Run capacity search"):
     )
     st.dataframe(candidates.head(10), use_container_width=True)
 
-st.info("This research model uses synthetic or public aggregate data and is not a clinical scheduling system.")
+st.info(
+    "This research model uses synthetic or public aggregate data and is not a clinical "
+    "scheduling system."
+)
