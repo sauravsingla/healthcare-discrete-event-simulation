@@ -67,7 +67,10 @@ def source_provenance(config: dict[str, Any], config_path: Path) -> list[dict[st
 
 def _markdown_table(frame: pd.DataFrame) -> str:
     headers = [str(column) for column in frame.columns]
-    rows = [["" if pd.isna(value) else str(value) for value in row] for row in frame.itertuples(index=False)]
+    rows = [
+        ["" if pd.isna(value) else str(value) for value in row]
+        for row in frame.itertuples(index=False)
+    ]
     lines = [
         "| " + " | ".join(headers) + " |",
         "| " + " | ".join("---" for _ in headers) + " |",
