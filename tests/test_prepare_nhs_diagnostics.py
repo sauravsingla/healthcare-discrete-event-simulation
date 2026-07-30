@@ -21,7 +21,12 @@ def test_prepare_aggregates_provider_month_mri_rows(tmp_path: Path) -> None:
         {
             "Provider Code": ["abc", "abc", "xyz", "abc"],
             "Provider Name": ["Alpha", "Alpha", "Xray", "Alpha"],
-            "Month": ["2025-04-01", "2025-04-01", "2025-04-01", "2025-04-01"],
+            "Month": [
+                "2025-04-01",
+                "2025-04-01",
+                "2025-04-01",
+                "2025-04-01",
+            ],
             "Test Name": ["MRI", "Magnetic Resonance Imaging", "CT", "MRI"],
             "Activity": [100, 20, 50, "invalid"],
             "Patients Waiting": [8, 2, 4, 1],
