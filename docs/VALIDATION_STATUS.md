@@ -2,22 +2,38 @@
 
 This document separates software correctness, empirical model validation and exact research reproduction. Passing software tests does not by itself establish clinical validity.
 
-## Status matrix
+## Latest exhaustive software run
+
+The repository was exercised end-to-end on **30 July 2026** using Python **3.10, 3.11 and 3.12**. The run covered pre-commit, Ruff, configured MyPy checks, all four CLI entry points, base simulation, advanced workflow, benchmark generation, example outputs, README assets, source and wheel builds, clean wheel installation, direct Streamlit startup and Docker health validation.
+
+The strict non-deselected test suite produced:
+
+```text
+94 passed, 4 failed
+Total package coverage: 77.20%
+Documented coverage target: 80%
+```
+
+The operational workflows completed successfully, but the complete advanced engine is not yet defect-free.
+
+## Current software status
 
 | Area | Status | Evidence or next requirement |
 |---|---|---|
-| Deterministic execution | Implemented | Fixed-seed regression tests compare complete results, patient ledgers and state observations |
-| Patient accounting | Implemented | Tests enforce `arrivals = completed + abandoned + unfinished` |
-| Replication workflow | Implemented | Tests verify one result row per replication and deterministic seed handling |
-| Small-data end-to-end sanity | Implemented | One-day scenarios exercise simulation, summaries and benchmark generation |
-| Static quality | Implemented | Ruff, mypy and pre-commit checks run in CI |
-| Test coverage | Implemented | CI enforces at least 80% package coverage |
-| Python compatibility | Implemented | CI tests Python 3.10, 3.11 and 3.12 |
-| Package integrity | Implemented | Source and wheel distributions are built and checked |
-| Clean wheel installation | Implemented | Built wheel is installed into a new virtual environment and smoke-tested |
-| CLI integrity | Implemented | Every installed CLI entry point is executed with `--help` |
-| Dashboard deployment | Implemented | Docker image starts and the Streamlit health endpoint is checked |
-| Public aggregate-data workflow | Implemented | No patient-level confidential or employer-owned data is required |
+| Deterministic execution | Verified for stable workflows | Fixed-seed tests compare results, patient ledgers and state observations |
+| Patient accounting | Verified for stable workflows | Tests enforce `arrivals = completed + abandoned + unfinished` |
+| Replication workflow | Verified | Tests verify one result row per replication and deterministic seed handling |
+| Base and standard advanced simulation | Verified | End-to-end execution passed on Python 3.10–3.12 |
+| CLI and benchmarks | Verified | All installed entry points, base simulation and benchmark workflows executed |
+| Package integrity | Verified | Source and wheel distributions built and passed `twine check` |
+| Clean wheel installation | Verified | Wheel installed and executed in a new virtual environment |
+| Dashboard deployment | Verified | Direct Streamlit and Docker health endpoints returned healthy responses |
+| Dynamic capacity reduction | Known defect | Resource target/token accounting failure tracked in [#10](https://github.com/sauravsingla/healthcare-discrete-event-simulation/issues/10) |
+| Machine-failure interrupt and repair | Known defect | Unhandled active-scan interruption tracked in [#11](https://github.com/sauravsingla/healthcare-discrete-event-simulation/issues/11) |
+| Machine-failure event recording | Known defect | Failure/repair event verification tracked in [#12](https://github.com/sauravsingla/healthcare-discrete-event-simulation/issues/12) |
+| Paper scenario registry | Known defect | Hourly-profile and operating-hours mismatch tracked in [#13](https://github.com/sauravsingla/healthcare-discrete-event-simulation/issues/13) |
+| Strict test coverage | Below target | 77.20% measured; restore at least 80% under [#14](https://github.com/sauravsingla/healthcare-discrete-event-simulation/issues/14) |
+| Static quality | Partially verified | Ruff and pre-commit pass; configured MyPy exclusions remain temporary |
 | Independent observational validation | Protocol available | Requires authoritative observations not used for calibration |
 | Statistical equivalence testing | Protocol available | Requires agreed target metrics, tolerances and replication count |
 | Exact 2020-paper reproduction | Not yet claimed | Authoritative scenario targets remain blank or incompletely transcribed |
@@ -30,7 +46,7 @@ This document separates software correctness, empirical model validation and exa
 
 ### Software verification
 
-Software verification asks whether the implementation behaves consistently with its stated logic. This repository addresses that through automated tests, deterministic seeds, accounting identities, static checks, package installation checks and deployment smoke tests.
+Software verification asks whether the implementation behaves consistently with its stated logic. Core execution, packaging and deployment pathways are verified. The four failing advanced-engine tests are publicly tracked and must be corrected before claiming complete software verification.
 
 ### Model validation
 
@@ -42,11 +58,12 @@ Exact reproduction asks whether published scenarios and results can be regenerat
 
 ## Minimum requirements before operational use
 
-1. Confirm patient pathways and priority rules with clinical and operational experts.
-2. Calibrate arrival, service, cancellation, no-show, abandonment and downtime distributions using approved evidence.
-3. Validate against a holdout period or independent site-level observations.
-4. Agree service-level, safety, workforce and cost constraints with accountable stakeholders.
-5. Document uncertainty, sensitivity and failure-mode analysis.
-6. Complete governance, privacy, safety and change-control review.
+1. Resolve issues #10–#14 and restore the strict quality gate without test deselection.
+2. Confirm patient pathways and priority rules with clinical and operational experts.
+3. Calibrate arrival, service, cancellation, no-show, abandonment and downtime distributions using approved evidence.
+4. Validate against a holdout period or independent site-level observations.
+5. Agree service-level, safety, workforce and cost constraints with accountable stakeholders.
+6. Document uncertainty, sensitivity and failure-mode analysis.
+7. Complete governance, privacy, safety and change-control review.
 
-See [VALIDATION.md](VALIDATION.md) for the detailed protocol.
+See [VALIDATION.md](VALIDATION.md) for the detailed empirical-validation protocol.
