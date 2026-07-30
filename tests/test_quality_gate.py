@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import sys
 
 import numpy as np
@@ -7,12 +8,18 @@ import pandas as pd
 import pytest
 
 from healthcare_des import reproduction_cli
-from healthcare_des.research_validation import save_distribution_plots
+from healthcare_des.research_validation import (
+    confidence_interval,
+    equivalence_report,
+    fit_distributions,
+    fit_hourly_profile,
+    save_distribution_plots,
+)
 
 
 def test_reproduction_cli_positive_int_validation() -> None:
     assert reproduction_cli.positive_int("3") == 3
-    with pytest.raises(Exception, match="positive"):
+    with pytest.raises(argparse.ArgumentTypeError, match="positive"):
         reproduction_cli.positive_int("0")
 
 
@@ -69,7 +76,10 @@ def test_reproduction_cli_main_writes_outputs(monkeypatch, tmp_path, capsys) -> 
     assert "baseline" in capsys.readouterr().out
     assert recorded["figure"] == tmp_path / "scenario_tradeoff.png"
     assert recorded["latex"] == tmp_path / "scenario_table.tex"
-    assert recorded["pdf"] == (tmp_path / "reproduction_report.pdf", "Paper Reproduction Report")
+    assert recorded["pdf"] == (
+        tmp_path / "reproduction_report.pdf",
+        "Paper Reproduction Report",
+    )
     manifest_path, manifest_kwargs = recorded["manifest"]
     assert manifest_path == tmp_path / "manifest.json"
     assert manifest_kwargs["replications"] == 2
@@ -80,7 +90,11 @@ def test_reproduction_cli_exits_when_targets_fail(monkeypatch, tmp_path) -> None
     results = pd.DataFrame({"name": ["baseline"]})
     checks = pd.DataFrame({"scenario": ["baseline"], "passed": [False]})
     monkeypatch.setattr(reproduction_cli, "load_config", lambda path: object())
-    monkeypatch.setattr(reproduction_cli, "reproduce_paper", lambda config, replications: (results, checks))
+    monkeypatch.setattr(
+        reproduction_cli,
+        "reproduce_paper",
+        lambda config, replications: (results, checks),
+    )
     monkeypatch.setattr(reproduction_cli, "save_scenario_figure", lambda *args: None)
     monkeypatch.setattr(reproduction_cli, "save_latex_table", lambda *args: None)
     monkeypatch.setattr(reproduction_cli, "save_pdf_report", lambda *args, **kwargs: None)
@@ -103,3 +117,33 @@ def test_distribution_plots_are_created(tmp_path) -> None:
     assert density_path.is_file()
     assert qq_path.name == "scan_expon_qq.png"
     assert density_path.name == "scan_expon_density.png"
+
+
+def test_research_validation_rejects_invalid_inputs() -> None:
+    valid = pd.DataFrame({"timestamp": ["2026-01-01 08:00"], "count": [1]})
+
+    with pytest.raises(ValueError, match="Missing timestamp"):
+        fit_hourly_profile(pd.DataFrame({"other": [1]}))
+    with pytest.raises(ValueError, match="operating_hours"):
+        fit_hourly_profile(valid, operating_hours=0)
+    with pytest.raises(ValueError, match="Missing count"):
+        fit_hourly_profile(valid, count_column="missing")
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        fit_hourly_profile(
+            pd.DataFrame({"timestamp": ["2026-01-01 08:00"], "count": [-1]}),
+            count_column="count",
+        )
+    with pytest.raises(ValueError, match="No activity"):
+        fit_hourly_profile(
+            pd.DataFrame({"timestamp": ["2026-01-01 23:00"]}),
+            operating_hours=1,
+            smoothing=0,
+        )
+    with pytest.raises(ValueError, match="At least two"):
+        confidence_interval([1.0])
+    with pytest.raises(ValueError, match="positive equivalence"):
+        equivalence_report([1.0, 2.0], [1.0, 2.0], 0)
+    with pytest.raises(ValueError, match="At least eight"):
+        fit_distributions([1.0, 2.0])
+    with pytest.raises(ValueError, match="Unknown scipy"):
+        fit_distributions(range(8), candidates=("not_a_distribution",))
