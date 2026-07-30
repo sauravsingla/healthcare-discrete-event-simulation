@@ -41,17 +41,23 @@ jobs:
             --overwrite
 
       - name: Execute complete MRI benchmark
+        id: benchmark
         run: |
           python scripts/run_nhs_end_to_end.py \
             --raw-dir data/raw/nhs_public \
             --output-dir outputs/nhs_end_to_end
 
       - name: Copy provenance receipt
+        if: always()
         run: |
-          cp data/raw/nhs_public/download_receipt.json \
-            outputs/nhs_end_to_end/download_receipt.json
+          mkdir -p outputs/nhs_end_to_end
+          if [ -f data/raw/nhs_public/download_receipt.json ]; then
+            cp data/raw/nhs_public/download_receipt.json \
+              outputs/nhs_end_to_end/download_receipt.json
+          fi
 
       - name: Validate derived outputs
+        if: steps.benchmark.outcome == 'success'
         run: |
           python - <<'PY'
           import json
@@ -84,10 +90,24 @@ jobs:
           PY
 
       - name: Publish workflow summary
+        if: steps.benchmark.outcome == 'success'
         run: |
           cat outputs/nhs_end_to_end/benchmark_report.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload derived benchmark results
+      - name: Publish failure summary
+        if: failure()
+        run: |
+          echo "# NHS MRI benchmark failure diagnostics" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f outputs/nhs_end_to_end/failure_diagnostics.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat outputs/nhs_end_to_end/failure_diagnostics.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "Schema inventory and provenance are attached as workflow artifacts." \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload derived benchmark results and diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nhs-mri-derived-benchmark-results
