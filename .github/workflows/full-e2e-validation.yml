@@ -1,0 +1,138 @@
+name: full-e2e-validation
+
+on:
+  push:
+    branches: [validation/full-e2e-20260730]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-python-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install package and all optional functionality
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,dashboard]"
+      - name: Repository-wide pre-commit checks
+        run: pre-commit run --all-files --show-diff-on-failure
+      - name: Ruff lint
+        run: ruff check src tests scripts examples app.py
+      - name: Full mypy check
+        run: mypy src/healthcare_des
+      - name: Run complete test suite with original coverage gate
+        run: pytest --cov=healthcare_des --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+      - name: Verify all CLI entry points
+        run: |
+          healthcare-des --help
+          healthcare-des-benchmark --help
+          healthcare-des-reproduce --help
+          healthcare-des-advanced-benchmark --help
+      - name: Run base CLI simulation
+        run: healthcare-des --config configs/baseline.yaml --replications 2
+      - name: Run multi-scenario CLI benchmark
+        run: healthcare-des-benchmark --config configs/baseline.yaml --replications 2 --output outputs/e2e-benchmark.csv
+      - name: Run reproduction CLI help and bounded workflow
+        run: |
+          healthcare-des-reproduce --help
+          python examples/advanced_workflow.py
+      - name: Run full advanced benchmark matrix
+        run: |
+          python scripts/benchmark_advanced.py --days 1 --replications 1 --output outputs/e2e-advanced-benchmark.csv
+          test -s outputs/e2e-advanced-benchmark.csv
+          test -s outputs/e2e-advanced-benchmark.json
+      - name: Generate example outputs
+        run: |
+          python examples/generate_example_outputs.py
+          test -s outputs/example_replications.csv
+          test -s outputs/example_summary.csv
+          test -s outputs/example_capacity_candidates.csv
+      - name: Generate README assets
+        env:
+          MPLBACKEND: Agg
+        run: |
+          python scripts/generate_readme_assets.py
+          test -s outputs/readme_advanced_benchmark.csv
+          test -s docs/assets/generated/runtime_by_demand.png
+          test -s docs/assets/generated/runtime_by_mri_capacity.png
+          test -s docs/assets/generated/output_growth_by_demand.png
+      - name: Build and validate package
+        run: |
+          python -m build
+          twine check dist/*
+      - name: Install wheel in clean environment
+        run: |
+          python -m venv /tmp/healthcare-des-wheel
+          /tmp/healthcare-des-wheel/bin/python -m pip install --upgrade pip
+          /tmp/healthcare-des-wheel/bin/python -m pip install dist/*.whl
+          /tmp/healthcare-des-wheel/bin/python -c "import healthcare_des; print(healthcare_des.__version__)"
+          /tmp/healthcare-des-wheel/bin/healthcare-des --help
+
+  dashboard-direct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dashboard
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dashboard]"
+      - name: Start Streamlit directly
+        run: |
+          streamlit run app.py --server.headless true --server.port 8501 > /tmp/streamlit.log 2>&1 &
+          echo $! > /tmp/streamlit.pid
+      - name: Verify direct dashboard health
+        run: |
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:8501/_stcore/health && exit 0
+            sleep 2
+          done
+          cat /tmp/streamlit.log
+          exit 1
+      - name: Stop Streamlit
+        if: always()
+        run: kill $(cat /tmp/streamlit.pid) || true
+
+  docker-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build --tag healthcare-des:e2e .
+      - name: Start container
+        run: docker run --detach --rm --name healthcare-des-e2e --publish 8501:8501 healthcare-des:e2e
+      - name: Verify container health and dashboard
+        run: |
+          for attempt in {1..30}; do
+            status="$(docker inspect --format='{{.State.Health.Status}}' healthcare-des-e2e 2>/dev/null || true)"
+            if [ "$status" = "healthy" ]; then
+              curl --fail --silent --show-error http://127.0.0.1:8501/_stcore/health
+              exit 0
+            fi
+            if [ "$status" = "unhealthy" ]; then
+              docker logs healthcare-des-e2e
+              exit 1
+            fi
+            sleep 2
+          done
+          docker logs healthcare-des-e2e
+          exit 1
+      - name: Stop container
+        if: always()
+        run: docker stop healthcare-des-e2e || true
