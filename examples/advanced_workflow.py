@@ -1,7 +1,12 @@
 """Reproducible example for the corrected advanced MRI simulation engine."""
 from dataclasses import replace
 
-from healthcare_des import AdvancedScenarioConfig, run_advanced_once, run_advanced_replications, summarise_advanced
+from healthcare_des import (
+    AdvancedScenarioConfig,
+    run_advanced_once,
+    run_advanced_replications,
+    summarise_advanced,
+)
 
 
 def main() -> None:
