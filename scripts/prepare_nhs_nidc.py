@@ -69,15 +69,11 @@ def prepare_assets(source: Path, output: Path) -> pd.DataFrame:
     if assets.empty:
         raise ValueError("No MRI scanner rows found in the supplied NIDC file")
 
-    assets["provider_code"] = (
-        assets[provider_col].astype(str).str.strip().str.upper()
-    )
+    assets["provider_code"] = assets[provider_col].astype(str).str.strip().str.upper()
     assets["reporting_year"] = assets[year_col].astype(str).str.strip()
     assets["mri_scanners"] = pd.to_numeric(assets[scanner_col], errors="coerce")
     assets = assets.dropna(subset=["mri_scanners"])
-    assets = assets[
-        assets["provider_code"].ne("") & assets["reporting_year"].ne("")
-    ]
+    assets = assets[assets["provider_code"].ne("") & assets["reporting_year"].ne("")]
     if assets.empty:
         raise ValueError("No valid provider-year MRI scanner rows remain after cleaning")
 
@@ -116,12 +112,8 @@ def join_activity(
 
     activity = activity.copy()
     assets = assets.copy()
-    activity["provider_code"] = (
-        activity["provider_code"].astype(str).str.strip().str.upper()
-    )
-    assets["provider_code"] = (
-        assets["provider_code"].astype(str).str.strip().str.upper()
-    )
+    activity["provider_code"] = activity["provider_code"].astype(str).str.strip().str.upper()
+    assets["provider_code"] = assets["provider_code"].astype(str).str.strip().str.upper()
     activity["reporting_year"] = activity["period"].astype(str).str[:4]
     assets["reporting_year"] = assets["reporting_year"].astype(str).str[:4]
 
@@ -131,14 +123,13 @@ def join_activity(
         how="left",
         validate="many_to_one",
     )
-    result["asset_join_status"] = result["mri_scanners"].notna().map(
-        {True: "matched", False: "missing"}
+    result["asset_join_status"] = (
+        result["mri_scanners"].notna().map({True: "matched", False: "missing"})
     )
     valid_scanners = result["mri_scanners"].gt(0)
     result["mri_activity_per_scanner"] = pd.NA
     result.loc[valid_scanners, "mri_activity_per_scanner"] = (
-        result.loc[valid_scanners, "mri_activity"]
-        / result.loc[valid_scanners, "mri_scanners"]
+        result.loc[valid_scanners, "mri_activity"] / result.loc[valid_scanners, "mri_scanners"]
     )
 
     output.parent.mkdir(parents=True, exist_ok=True)
