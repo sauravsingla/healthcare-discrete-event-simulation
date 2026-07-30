@@ -1,10 +1,12 @@
 """Backward-compatible public import surface for the corrected advanced engine."""
 
+import simpy
+
 from . import advanced_engine as _engine
 
 
 class MRIMachine(_engine.MRIMachine):
-    """MRI machine that permits only one active failure/repair episode."""
+    """MRI machine with interrupt-safe scan and repair handling."""
 
     def _failure_clock(self, mtbf: float):
         while True:
@@ -22,6 +24,37 @@ class MRIMachine(_engine.MRIMachine):
             yield self.env.timeout(repair)
             self.blockers.discard("failure")
             self.state = "AVAILABLE" if not self.blockers and self.resource.count == 0 else "BUSY"
+
+    def scan(self, duration: float):
+        """Run a scan while containing repeated failure interrupts."""
+        remaining = duration
+        segment_started: float | None = None
+        self.active_scan = self.env.active_process
+        try:
+            while remaining > 0:
+                try:
+                    while self.blockers:
+                        segment_started = None
+                        yield self.env.timeout(1)
+                    self.state = "BUSY"
+                    segment_started = self.env.now
+                    yield self.env.timeout(remaining)
+                    remaining = 0
+                except simpy.Interrupt as interruption:
+                    cause = interruption.cause
+                    if not isinstance(cause, tuple) or not cause or cause[0] != "machine_failure":
+                        raise
+                    if segment_started is not None:
+                        elapsed = self.env.now - segment_started
+                        remaining = (
+                            duration
+                            if self.config.restart_scan_after_failure
+                            else max(0.0, remaining - elapsed)
+                        )
+                    segment_started = None
+        finally:
+            self.active_scan = None
+            self.state = "AVAILABLE" if not self.blockers else self.state
 
 
 class AdvancedMRIModel(_engine.AdvancedMRIModel):
