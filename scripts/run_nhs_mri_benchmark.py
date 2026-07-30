@@ -65,18 +65,6 @@ def source_provenance(config: dict[str, Any], config_path: Path) -> list[dict[st
     return provenance
 
 
-def _markdown_table(frame: pd.DataFrame) -> str:
-    headers = [str(column) for column in frame.columns]
-    lines = [
-        "| " + " | ".join(headers) + " |",
-        "| " + " | ".join("---" for _ in headers) + " |",
-    ]
-    for row in frame.itertuples(index=False, name=None):
-        values = ["" if pd.isna(value) else str(value) for value in row]
-        lines.append("| " + " | ".join(values) + " |")
-    return "\n".join(lines)
-
-
 def render_report(scores: pd.DataFrame, metadata: dict[str, Any]) -> str:
     lines = [
         "# NHS MRI external benchmark report",
@@ -106,13 +94,11 @@ def render_report(scores: pd.DataFrame, metadata: dict[str, Any]) -> str:
             )
             if column in scores.columns
         ]
-        lines.append(_markdown_table(scores[columns]))
+        lines.append(scores[columns].to_markdown(index=False))
     lines.extend(["", "## Provenance", ""])
     for source in metadata["sources"]:
         release = source.get("release") or "not specified"
-        lines.append(
-            f"- **{source['name']}** — release: {release}; SHA-256: `{source['sha256']}`"
-        )
+        lines.append(f"- **{source['name']}** — release: {release}; SHA-256: `{source['sha256']}`")
     excluded = metadata.get("excluded_providers", [])
     lines.extend(["", "## Exclusions", ""])
     if excluded:
