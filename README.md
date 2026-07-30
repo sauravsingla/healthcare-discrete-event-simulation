@@ -72,6 +72,64 @@ python scripts/generate_readme_assets.py
 
 The generated assets include runtime scaling by demand and MRI capacity. They are diagnostics of software performance, not clinical validation findings.
 
+## Reproducible benchmark results
+
+The documentation benchmark exercises the advanced simulation engine across **18 demand-capacity scenarios** and **36 measured simulation runs**:
+
+| Benchmark dimension | Values |
+|---|---|
+| Measurement horizon | 2 simulated days per run |
+| Replications | 2 per scenario |
+| Daily demand | 35, 70 and 140 patients |
+| MRI capacity | 1, 2, 4, 8, 12 and 20 machines |
+| Scenario combinations | 18 |
+| Total measured runs | 36 |
+| Random seed | 17, with deterministic replication offsets |
+| Bootstrap samples | 100 per run |
+
+The benchmark records elapsed runtime, generated patient-ledger rows and state-observation rows for every run. Its principal results are:
+
+- runtime and patient-output volume increase as simulated demand increases;
+- state-observation volume is primarily determined by the simulation horizon and tracking interval;
+- adding MRI capacity changes queueing behaviour and event processing, while runtime remains bounded across the tested 1–20 machine range;
+- every benchmark scenario preserves the lifecycle reconciliation check `arrivals = completed + abandoned + unfinished`;
+- all 18 scenarios are executed as part of the bounded benchmark, and CI verifies that the expected output files and metadata are produced.
+
+<p align="center">
+  <img src="docs/assets/generated/runtime_by_demand.png" alt="Advanced-engine runtime by daily demand" width="760">
+</p>
+
+<p align="center">
+  <img src="docs/assets/generated/runtime_by_mri_capacity.png" alt="Advanced-engine runtime by MRI capacity" width="760">
+</p>
+
+<p align="center">
+  <img src="docs/assets/generated/output_growth_by_demand.png" alt="Simulation output growth by daily demand" width="760">
+</p>
+
+Reproduce the benchmark locally with:
+
+```bash
+python scripts/generate_readme_assets.py
+```
+
+The command writes the complete run-level results to:
+
+```text
+outputs/readme_advanced_benchmark.csv
+```
+
+For a configurable benchmark:
+
+```bash
+healthcare-des-advanced-benchmark \
+  --days 7 \
+  --replications 3 \
+  --output outputs/advanced_benchmark.csv
+```
+
+> **Interpretation note:** elapsed time depends on the processor, operating system, Python environment and concurrent workload. The benchmark is intended to demonstrate reproducible scaling behaviour and output growth, not to claim a universal execution speed or clinical effectiveness.
+
 ## Current capabilities
 
 - outpatient, inpatient and 24-hour emergency demand;
