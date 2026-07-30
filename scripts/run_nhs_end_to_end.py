@@ -157,9 +157,7 @@ def score_providers(frame: pd.DataFrame, holdout_months: int = 2) -> pd.DataFram
             "wape": float((group["actual"] - group["predicted"]).abs().sum() / abs(actual))
             if actual
             else np.nan,
-            "throughput_error": float(abs(predicted - actual) / abs(actual))
-            if actual
-            else np.nan,
+            "throughput_error": float(abs(predicted - actual) / abs(actual)) if actual else np.nan,
         }
         if "mri_scanners" in group:
             scanners = pd.to_numeric(group["mri_scanners"], errors="coerce").dropna()
@@ -190,9 +188,7 @@ def run(raw_dir: Path, output_dir: Path) -> None:
         json.dumps(inventory, indent=2), encoding="utf-8"
     )
     holdout_periods = sorted(benchmark["period"].unique())[-2:]
-    national_actual = float(
-        benchmark[benchmark["period"].isin(holdout_periods)]["actual"].sum()
-    )
+    national_actual = float(benchmark[benchmark["period"].isin(holdout_periods)]["actual"].sum())
     national_predicted = float(
         benchmark[benchmark["period"].isin(holdout_periods)]["predicted"].sum()
     )
@@ -213,9 +209,7 @@ def run(raw_dir: Path, output_dir: Path) -> None:
         else None,
         "claim_limit": "External operational benchmark only; not clinical validation or causal inference.",
     }
-    (output_dir / "run_metadata.json").write_text(
-        json.dumps(metadata, indent=2), encoding="utf-8"
-    )
+    (output_dir / "run_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     lines = [
         "# NHS MRI external benchmark",
         "",
