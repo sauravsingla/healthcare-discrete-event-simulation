@@ -3,13 +3,14 @@ name: publish-validation-status
 on:
   push:
     branches: [fix/baseline-quality-gate]
+  pull_request:
 
 permissions:
   contents: write
 
 jobs:
   publish:
-    if: github.event.head_commit.message != 'docs: publish validation status'
+    if: github.event_name != 'push' || github.event.head_commit.message != 'docs: publish validation status'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
