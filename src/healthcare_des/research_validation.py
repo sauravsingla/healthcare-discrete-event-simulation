@@ -127,7 +127,7 @@ def fit_distributions(
         params = distribution.fit(sample)
         log_likelihood = float(np.sum(distribution.logpdf(sample, *params)))
         k = len(params)
-        ks = stats.kstest(sample, name, args=params)
+        ks = stats.kstest(sample, lambda value: distribution.cdf(value, *params))
         ordered = np.sort(sample)
         cdf = np.clip(distribution.cdf(ordered, *params), 1e-12, 1 - 1e-12)
         n = sample.size
