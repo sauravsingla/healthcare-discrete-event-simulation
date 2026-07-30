@@ -193,7 +193,8 @@ class DynamicCapacity:
         self.default_capacity = default_capacity
         self.windows = windows
         self.maximum = max(default_capacity, *(window.capacity for window in windows), 1)
-        self.tokens = simpy.Container(env, capacity=self.maximum, init=default_capacity)
+        initial_capacity = self.target(int(env.now % 1440))
+        self.tokens = simpy.Container(env, capacity=self.maximum, init=initial_capacity)
         self.busy = 0
         env.process(self._controller())
 
@@ -220,9 +221,9 @@ class DynamicCapacity:
             yield self.env.timeout(1)
 
     def release(self):
-        self.busy -= 1
-        if self.busy < 0:
+        if self.busy <= 0:
             raise RuntimeError("dynamic capacity busy count became negative")
+        self.busy -= 1
         yield self.env.process(self.rebalance())
 
 
@@ -382,12 +383,22 @@ class AdvancedMRIModel:
     def _timed_staff_service(self, capacity: DynamicCapacity, duration: float, deadline: float):
         started_wait = self.env.now
         token = capacity.tokens.get(1)
+        acquired = False
+
+        def mark_acquired(_event):
+            nonlocal acquired
+            acquired = True
+            capacity.busy += 1
+
+        token.callbacks.append(mark_acquired)
         timeout = self.env.timeout(self._remaining_patience(deadline))
         outcome = yield token | timeout
         if token not in outcome:
-            token.cancel()
+            if acquired:
+                yield self.env.process(capacity.release())
+            else:
+                token.cancel()
             return None
-        capacity.busy += 1
         yield self.env.process(capacity.rebalance())
         wait = self.env.now - started_wait
         try:

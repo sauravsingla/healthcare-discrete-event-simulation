@@ -39,11 +39,12 @@ jobs:
       - name: Type check
         if: matrix.python-version == '3.10'
         run: mypy src/healthcare_des
+      - name: Targeted issue 10 regression
+        run: pytest -q tests/test_advanced_corrections.py::test_capacity_reduction_never_creates_negative_or_excess_tokens
       - name: Test with coverage threshold
         run: >-
           pytest --cov=healthcare_des --cov-report=term-missing --cov-report=xml
           --cov-fail-under=73
-          --deselect=tests/test_advanced_corrections.py::test_capacity_reduction_never_creates_negative_or_excess_tokens
           --deselect=tests/test_advanced_corrections.py::test_failures_interrupt_and_repair_scans_without_losing_patient_accounting
           --deselect=tests/test_advanced_model.py::test_machine_failures_are_recorded
           --deselect=tests/test_advanced_model.py::test_paper_registry_runs_all_eleven_scenarios
