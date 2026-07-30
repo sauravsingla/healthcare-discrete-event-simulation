@@ -61,6 +61,9 @@ def test_missing_mri_schema_fails_with_actionable_message(tmp_path: Path) -> Non
     try:
         MODULE.run(raw, tmp_path / "out")
     except ValueError as exc:
-        assert "provider, period, modality and activity" in str(exc)
+        message = str(exc)
+        assert "provider-month MRI activity" in message
+        assert "schema_inventory.json" in message
+        assert (tmp_path / "out" / "failure_diagnostics.json").is_file()
     else:
         raise AssertionError("Expected schema discovery failure")
