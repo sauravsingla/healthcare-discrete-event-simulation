@@ -94,10 +94,11 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
         required=False,
     )
 
-    mri_mask = (
-        frame[test_col]
-        .astype(str)
-        .str.contains(MRI_PATTERN, case=False, na=False, regex=True)
+    mri_mask = frame[test_col].astype(str).str.contains(
+        MRI_PATTERN,
+        case=False,
+        na=False,
+        regex=True,
     )
     mri = frame[mri_mask].copy()
     if mri.empty:
@@ -139,9 +140,8 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
         .agg(aggregations)
         .sort_values(["provider_code", "period"], ignore_index=True)
     )
-    result["activity_per_calendar_day"] = result["mri_activity"] / pd.PeriodIndex(
-        result["period"], freq="M"
-    ).days_in_month
+    days_in_month = pd.PeriodIndex(result["period"], freq="M").days_in_month
+    result["activity_per_calendar_day"] = result["mri_activity"] / days_in_month
 
     output.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(output, index=False)
