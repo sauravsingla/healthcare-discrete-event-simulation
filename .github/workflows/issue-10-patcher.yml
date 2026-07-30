@@ -71,12 +71,10 @@ jobs:
           )
           path.write_text(text)
           PY
-      - name: Remove temporary branch workflow
-        run: rm -f .github/workflows/apply-issue-10-fix.yml
       - name: Commit source fix
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add src/healthcare_des/advanced_engine.py .github/workflows/apply-issue-10-fix.yml
+          git add src/healthcare_des/advanced_engine.py
           git commit -m 'fix: make dynamic capacity accounting atomic'
           git push origin HEAD:fix/issue-10-dynamic-capacity
