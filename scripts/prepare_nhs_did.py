@@ -73,9 +73,7 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
     )
 
     mri = frame[
-        frame[modality_col]
-        .astype(str)
-        .str.contains(MRI_PATTERN, case=False, na=False, regex=True)
+        frame[modality_col].astype(str).str.contains(MRI_PATTERN, case=False, na=False, regex=True)
     ].copy()
     if mri.empty:
         raise ValueError("No MRI rows found in the supplied DID file")
@@ -97,9 +95,7 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
     group_columns = ["provider_code", "period", "patient_source"]
     aggregations: dict[str, str] = {"did_mri_activity": "sum"}
     if report_time_col is not None:
-        mri["median_test_to_report_days"] = pd.to_numeric(
-            mri[report_time_col], errors="coerce"
-        )
+        mri["median_test_to_report_days"] = pd.to_numeric(mri[report_time_col], errors="coerce")
         aggregations["median_test_to_report_days"] = "median"
 
     result = (
