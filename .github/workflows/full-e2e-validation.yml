@@ -3,6 +3,7 @@ name: full-e2e-validation
 on:
   push:
     branches: [validation/full-e2e-20260730]
+  pull_request:
   workflow_dispatch:
 
 permissions:
