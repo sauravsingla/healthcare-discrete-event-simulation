@@ -18,7 +18,9 @@ def small_config(**changes):
 
 
 def test_dynamic_capacity_by_shift_changes_state():
-    config = small_config(radiographer_capacity=(CapacityWindow(0, 120, 2), CapacityWindow(120, 480, 1)))
+    config = small_config(
+        radiographer_capacity=(CapacityWindow(0, 120, 2), CapacityWindow(120, 480, 1))
+    )
     _, _, state = run_advanced_once(config)
     assert state["radiographer_tokens"].max() >= 2
     assert state["radiographer_tokens"].min() <= 1
@@ -49,20 +51,26 @@ def test_capacity_aware_scheduler_limits_outpatient_slots():
     config = small_config(daily_demand=500, mri_machines=1, overbooking_rate=0)
     result, frame, _ = run_advanced_once(config)
     outpatient = frame.loc[frame["patient_type"] == "outpatient"]
-    theoretical_daily_capacity = int(config.operating_hours * 60 / (config.scan_mean + config.cleaning_minutes))
+    theoretical_daily_capacity = int(
+        config.operating_hours * 60 / (config.scan_mean + config.cleaning_minutes)
+    )
     assert len(outpatient) <= theoretical_daily_capacity * config.days
     assert result.arrivals >= result.completed
 
 
 def test_emergencies_can_arrive_outside_outpatient_hours():
-    config = small_config(operating_hours=8, emergency_share=0.8, outpatient_share=0.1, inpatient_share=0.1)
+    config = small_config(
+        operating_hours=8, emergency_share=0.8, outpatient_share=0.1, inpatient_share=0.1
+    )
     _, frame, _ = run_advanced_once(config)
     emergency = frame.loc[frame["patient_type"] == "emergency"]
     assert ((emergency["arrival"] % 1440) >= 480).any()
 
 
 def test_cancellation_no_show_and_abandonment_accounting():
-    config = small_config(cancellation_rate=0.4, no_show_rate=0.4, abandonment_minutes=0.01, daily_demand=40)
+    config = small_config(
+        cancellation_rate=0.4, no_show_rate=0.4, abandonment_minutes=0.01, daily_demand=40
+    )
     result, _, _ = run_advanced_once(config)
     assert result.cancelled + result.no_shows + result.abandoned > 0
 
@@ -83,6 +91,15 @@ def test_paper_registry_runs_all_eleven_scenarios():
 def test_paper_target_verification(tmp_path):
     results = pd.DataFrame([{"name": "scenario-01-baseline", "throughput_per_day": 10.0}])
     targets = tmp_path / "targets.csv"
-    pd.DataFrame([{"scenario": "scenario-01-baseline", "metric": "throughput_per_day", "expected": 10.0, "tolerance_pct": 1.0}]).to_csv(targets, index=False)
+    pd.DataFrame(
+        [
+            {
+                "scenario": "scenario-01-baseline",
+                "metric": "throughput_per_day",
+                "expected": 10.0,
+                "tolerance_pct": 1.0,
+            }
+        ]
+    ).to_csv(targets, index=False)
     checks = verify_paper_targets(results, targets)
     assert bool(checks.loc[0, "passed"])

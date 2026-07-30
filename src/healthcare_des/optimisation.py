@@ -64,7 +64,11 @@ def search_capacity(
             }
         )
 
-    return pd.DataFrame(rows).sort_values(
-        ["objective_score", "mean_wait_minutes", "throughput_per_day"],
-        ascending=[True, True, False],
-    ).reset_index(drop=True)
+    return (
+        pd.DataFrame(rows)
+        .sort_values(
+            ["objective_score", "mean_wait_minutes", "throughput_per_day"],
+            ascending=[True, True, False],
+        )
+        .reset_index(drop=True)
+    )

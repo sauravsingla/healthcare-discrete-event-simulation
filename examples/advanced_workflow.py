@@ -1,4 +1,5 @@
 """Reproducible example for the corrected advanced MRI simulation engine."""
+
 from dataclasses import replace
 
 from healthcare_des import (

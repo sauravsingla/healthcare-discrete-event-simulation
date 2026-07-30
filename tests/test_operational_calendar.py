@@ -75,18 +75,14 @@ def test_random_failures_are_reported() -> None:
 
 def test_planned_maintenance_delays_mri_access() -> None:
     baseline, _ = run_once(operational_config())
-    maintained, _ = run_once(
-        replace(operational_config(), planned_mri_maintenance=((0, 120),))
-    )
+    maintained, _ = run_once(replace(operational_config(), planned_mri_maintenance=((0, 120),)))
     assert maintained.mean_system_minutes > baseline.mean_system_minutes
     assert maintained.mri_downtime_minutes > 0
 
 
 def test_staff_breaks_delay_patient_flow() -> None:
     baseline, _ = run_once(operational_config())
-    with_breaks, _ = run_once(
-        replace(operational_config(), staff_breaks=((0, 120),))
-    )
+    with_breaks, _ = run_once(replace(operational_config(), staff_breaks=((0, 120),)))
     assert with_breaks.mean_system_minutes > baseline.mean_system_minutes
 
 

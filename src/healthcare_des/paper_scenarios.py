@@ -1,4 +1,5 @@
 """Published-scenario registry and tolerance-based reproduction runner."""
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -77,6 +78,18 @@ def verify_paper_targets(
         observed = float(indexed.loc[scenario, metric])
         expected = float(row.expected)
         tolerance = float(getattr(row, "tolerance_pct", default_tolerance_pct))
-        error_pct = abs(observed - expected) / abs(expected) * 100 if expected else abs(observed) * 100
-        checks.append({"scenario": scenario, "metric": metric, "expected": expected, "observed": observed, "error_pct": error_pct, "tolerance_pct": tolerance, "passed": error_pct <= tolerance})
+        error_pct = (
+            abs(observed - expected) / abs(expected) * 100 if expected else abs(observed) * 100
+        )
+        checks.append(
+            {
+                "scenario": scenario,
+                "metric": metric,
+                "expected": expected,
+                "observed": observed,
+                "error_pct": error_pct,
+                "tolerance_pct": tolerance,
+                "passed": error_pct <= tolerance,
+            }
+        )
     return pd.DataFrame(checks)

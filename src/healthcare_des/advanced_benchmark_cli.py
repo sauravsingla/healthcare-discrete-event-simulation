@@ -1,4 +1,5 @@
 """Command-line benchmark for the corrected advanced simulation engine."""
+
 from __future__ import annotations
 
 import argparse
@@ -73,9 +74,7 @@ def main() -> None:
         "scenarios": int(frame["scenario"].nunique()),
         "rows": len(frame),
     }
-    args.output.with_suffix(".json").write_text(
-        json.dumps(metadata, indent=2), encoding="utf-8"
-    )
+    args.output.with_suffix(".json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     summary = frame.groupby(["daily_demand", "mri_machines"])["elapsed_seconds"].agg(
         ["mean", "max"]
     )

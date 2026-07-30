@@ -21,7 +21,11 @@ def calibration_metrics(
 
     error = simulated_values - observed_values
     nonzero = observed_values != 0
-    mape = float(np.mean(np.abs(error[nonzero] / observed_values[nonzero])) * 100) if nonzero.any() else float("nan")
+    mape = (
+        float(np.mean(np.abs(error[nonzero] / observed_values[nonzero])) * 100)
+        if nonzero.any()
+        else float("nan")
+    )
     return {
         "mae": float(np.mean(np.abs(error))),
         "rmse": float(np.sqrt(np.mean(np.square(error)))),

@@ -1,4 +1,5 @@
 """Benchmark the corrected advanced simulation across demand and scanner scales."""
+
 from __future__ import annotations
 
 import argparse

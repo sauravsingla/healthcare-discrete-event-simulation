@@ -1,4 +1,5 @@
 """Deterministic end-to-end sanity checks using a very small simulation horizon."""
+
 from __future__ import annotations
 
 from dataclasses import replace
@@ -55,7 +56,9 @@ def test_small_replications_return_one_row_per_replication() -> None:
 
     assert len(results) == 2
     assert results["replication"].tolist() == [0, 1]
-    assert (results["arrivals"] == results["completed"] + results["abandoned"] + results["unfinished"]).all()
+    assert (
+        results["arrivals"] == results["completed"] + results["abandoned"] + results["unfinished"]
+    ).all()
 
 
 def test_benchmark_helper_produces_complete_small_output() -> None:

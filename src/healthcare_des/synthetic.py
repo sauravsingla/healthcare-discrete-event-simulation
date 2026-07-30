@@ -34,10 +34,14 @@ def generate_daily_demand(pattern: DemandPattern = DemandPattern()) -> pd.DataFr
     expected: list[float] = []
 
     for index, date in enumerate(dates):
-        multiplier = pattern.weekday_multiplier if date.dayofweek < 5 else pattern.weekend_multiplier
+        multiplier = (
+            pattern.weekday_multiplier if date.dayofweek < 5 else pattern.weekend_multiplier
+        )
         if date.dayofweek == 0:
             multiplier *= pattern.monday_multiplier
-        expected.append(pattern.base_daily_demand * multiplier * (1 + pattern.trend_per_day * index))
+        expected.append(
+            pattern.base_daily_demand * multiplier * (1 + pattern.trend_per_day * index)
+        )
 
     demand = rng.poisson(np.asarray(expected, dtype=float))
     return pd.DataFrame(

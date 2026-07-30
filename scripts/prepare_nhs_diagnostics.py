@@ -29,7 +29,9 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
     test_col = find_column(columns, ("test",))
     activity_col = find_column(columns, ("activity",))
 
-    mri = frame[frame[test_col].astype(str).str.contains("MRI|magnetic resonance", case=False, na=False)].copy()
+    mri = frame[
+        frame[test_col].astype(str).str.contains("MRI|magnetic resonance", case=False, na=False)
+    ].copy()
     mri[activity_col] = pd.to_numeric(mri[activity_col], errors="coerce")
     mri = mri.dropna(subset=[activity_col])
     if mri.empty:
