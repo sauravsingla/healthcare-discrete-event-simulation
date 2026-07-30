@@ -38,9 +38,23 @@ def find_column(
 
 
 def _period_values(frame: pd.DataFrame, columns: list[str]) -> pd.Series:
+    year_col = find_column(columns, (("year",),), required=False)
+    month_col = find_column(
+        columns,
+        (("month", "number"), ("month", "num"), ("month",)),
+        required=False,
+    )
+    if year_col is not None and month_col is not None:
+        parsed = pd.to_datetime(
+            {"year": frame[year_col], "month": frame[month_col], "day": 1},
+            errors="coerce",
+        )
+        if parsed.notna().any():
+            return parsed.dt.to_period("M").astype(str)
+
     period_col = find_column(
         columns,
-        (("period",), ("month",), ("date",)),
+        (("reporting", "period"), ("period",), ("date",), ("month",)),
         required=False,
     )
     if period_col is not None:
@@ -51,23 +65,16 @@ def _period_values(frame: pd.DataFrame, columns: list[str]) -> pd.Series:
         if values.ne("").any():
             return values
 
-    year_col = find_column(columns, (("year",),), required=False)
-    month_col = find_column(columns, (("month",),), required=False)
-    if year_col is not None and month_col is not None:
-        parsed = pd.to_datetime(
-            {"year": frame[year_col], "month": frame[month_col], "day": 1},
-            errors="coerce",
-        )
-        if parsed.notna().any():
-            return parsed.dt.to_period("M").astype(str)
-
     raise ValueError("Could not derive a provider-month period from the supplied NHS file")
 
 
 def prepare(source: Path, output: Path) -> pd.DataFrame:
     frame = pd.read_csv(source, low_memory=False)
     columns = list(frame.columns)
-    test_col = find_column(columns, (("test",), ("modality",)))
+    test_col = find_column(
+        columns,
+        (("modality",), ("test", "name"), ("diagnostic", "test"), ("test",)),
+    )
     provider_col = find_column(
         columns,
         (("provider", "code"), ("organisation", "code"), ("org", "code")),
