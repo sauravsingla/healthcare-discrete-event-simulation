@@ -1,0 +1,52 @@
+{
+  "sources": [
+    {
+      "id": "dm01_2026_03",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "March 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/05/DM01-MARCH-2026-full-extract_32W3L.zip",
+      "filename": "dm01_march_2026.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "did_2024_25_counts",
+      "name": "DID modality provider counts",
+      "release": "Final 2024-25",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2025/11/DID-Table-1-2024-25-Modality-Provider-Counts-XLSX-188KB.xlsx",
+      "filename": "did_table_1_2024_25.xlsx",
+      "archive": null
+    },
+    {
+      "id": "did_2024_25_request_to_test",
+      "name": "DID modality provider median request to test",
+      "release": "Final 2024-25",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2025/11/DID-Table-2-2024-25-Modality-Provider-Median-Request-to-Test-XLSX-179KB.xlsx",
+      "filename": "did_table_2_2024_25.xlsx",
+      "archive": null
+    },
+    {
+      "id": "did_2024_25_test_to_report",
+      "name": "DID modality provider median test to report",
+      "release": "Final 2024-25",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2025/11/DID-Table-3-2024-25-Modality-Provider-Median-Test-to-Report-XLSX-161KB.xlsx",
+      "filename": "did_table_3_2024_25.xlsx",
+      "archive": null
+    },
+    {
+      "id": "nidc_assets_2024_25",
+      "name": "National Imaging Data Collection asset count",
+      "release": "2024-25",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/02/National-Imaging-Data-Collection-Asset-Count-2024-25-v1-FINAL.xlsx",
+      "filename": "nidc_asset_count_2024_25.xlsx",
+      "archive": null
+    },
+    {
+      "id": "workforce_2025_12",
+      "name": "NHS HCHS Workforce Statistics CSV files",
+      "release": "December 2025",
+      "url": "https://files.digital.nhs.uk/DA/85C812/NHS%20HCHS%20Workforce%20Statistics%2C%20Trusts%20and%20core%20organisations%20-%20CSV%20data%20files%2C%20December%202025.zip",
+      "filename": "nhs_workforce_december_2025.zip",
+      "archive": "zip"
+    }
+  ]
+}
