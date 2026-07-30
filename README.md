@@ -197,6 +197,40 @@ outputs/example_summary.csv
 outputs/example_capacity_candidates.csv
 ```
 
+## Key results
+
+The framework enables quantitative evaluation of MRI service configurations under varying demand, staffing, equipment and operational conditions. Its reproducible outputs support:
+
+- waiting-time measurement by service stage and patient pathway;
+- throughput, completion-rate and service-level analysis;
+- utilisation analysis for MRI machines, radiographers, radiologists and administrative staff;
+- queue-length, congestion and operational bottleneck identification;
+- cancellation, no-show, abandonment and unfinished-workload analysis;
+- sensitivity analysis across demand, staffing, capacity and equipment-availability assumptions;
+- replicated simulation with bootstrap summaries and 95% confidence intervals;
+- transparent ranking of alternative capacity and staffing configurations;
+- benchmark comparison across multiple demand-capacity scenarios; and
+- machine-readable evidence suitable for research, audit and operational evaluation.
+
+## Applications
+
+The framework can support:
+
+- hospital MRI capacity and demand planning;
+- workforce planning and staffing optimisation;
+- healthcare digital-twin development;
+- evaluation of scheduling, appointment and prioritisation policies;
+- what-if analysis before operational or infrastructure changes;
+- healthcare operations-management and simulation research;
+- teaching discrete-event simulation, queueing and healthcare analytics;
+- public-sector healthcare planning using non-sensitive aggregate data;
+- benchmarking simulation methodologies and optimisation algorithms; and
+- development of transparent, explainable operational decision-support systems.
+
+## Impact
+
+This framework enables healthcare organisations and researchers to evaluate operational strategies before deployment, quantify trade-offs among capacity, waiting times, service levels and resource utilisation, and generate reproducible evidence for healthcare planning and operations research. By supporting configurable scenario analysis with explicit assumptions, uncertainty estimates and machine-readable outputs, it provides a practical foundation for digital twins, operational optimisation and evidence-based decision-making without disrupting live clinical services.
+
 ## Reproducible benchmark results
 
 The documentation benchmark exercises the advanced engine across **18 demand-capacity scenarios** and **36 measured simulation runs**.
