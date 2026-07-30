@@ -87,24 +87,23 @@ The documentation benchmark exercises the advanced simulation engine across **18
 | Random seed | 17, with deterministic replication offsets |
 | Bootstrap samples | 100 per run |
 
-The benchmark records elapsed runtime, generated patient-ledger rows and state-observation rows for every run. Its principal results are:
+The benchmark records elapsed runtime, generated patient-ledger rows and state-observation rows for every run. Its principal verification outcomes are:
 
-- runtime and patient-output volume increase as simulated demand increases;
-- state-observation volume is primarily determined by the simulation horizon and tracking interval;
-- adding MRI capacity changes queueing behaviour and event processing, while runtime remains bounded across the tested 1–20 machine range;
 - every benchmark scenario preserves the lifecycle reconciliation check `arrivals = completed + abandoned + unfinished`;
-- all 18 scenarios are executed as part of the bounded benchmark, and CI verifies that the expected output files and metadata are produced.
+- all 18 demand-capacity combinations are executed with two deterministic replications;
+- runtime, patient-ledger volume and state-observation volume are recorded for each run;
+- CI verifies that the expected benchmark output files and metadata are produced.
 
 <p align="center">
-  <img src="docs/assets/generated/runtime_by_demand.png" alt="Advanced-engine runtime by daily demand" width="760">
+  <img src="docs/assets/generated/benchmark_matrix.svg" alt="Advanced-engine benchmark scenario matrix" width="820">
 </p>
 
 <p align="center">
-  <img src="docs/assets/generated/runtime_by_mri_capacity.png" alt="Advanced-engine runtime by MRI capacity" width="760">
+  <img src="docs/assets/generated/benchmark_workflow.svg" alt="Reproducible benchmark workflow" width="820">
 </p>
 
 <p align="center">
-  <img src="docs/assets/generated/output_growth_by_demand.png" alt="Simulation output growth by daily demand" width="760">
+  <img src="docs/assets/generated/benchmark_outputs.svg" alt="Benchmark outputs and validation checks" width="820">
 </p>
 
 Reproduce the benchmark locally with:
