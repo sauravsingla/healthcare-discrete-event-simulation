@@ -43,14 +43,22 @@ def read_tables(root: Path) -> tuple[list[tuple[str, pd.DataFrame]], list[dict[s
                 frame = pd.read_csv(path, low_memory=False)
                 label = str(path.relative_to(root))
                 tables.append((label, frame))
-                inventory.append({"table": label, "rows": len(frame), "columns": list(map(str, frame.columns))})
+                inventory.append(
+                    {"table": label, "rows": len(frame), "columns": list(map(str, frame.columns))}
+                )
             elif path.suffix.lower() in {".xlsx", ".xls"}:
                 book = pd.ExcelFile(path)
                 for sheet in book.sheet_names:
                     frame = pd.read_excel(path, sheet_name=sheet)
                     label = f"{path.relative_to(root)}::{sheet}"
                     tables.append((label, frame))
-                    inventory.append({"table": label, "rows": len(frame), "columns": list(map(str, frame.columns))})
+                    inventory.append(
+                        {
+                            "table": label,
+                            "rows": len(frame),
+                            "columns": list(map(str, frame.columns)),
+                        }
+                    )
         except Exception as exc:  # schema evidence must survive unreadable ancillary files
             inventory.append({"table": str(path.relative_to(root)), "error": type(exc).__name__})
     return tables, inventory
@@ -72,7 +80,9 @@ def extract_activity(tables: list[tuple[str, pd.DataFrame]]) -> tuple[pd.DataFra
             if score:
                 candidates.append((score, label, frame, mapping))
     if not candidates:
-        raise ValueError("No table contained identifiable provider, period, modality and activity columns with MRI rows")
+        raise ValueError(
+            "No table contained identifiable provider, period, modality and activity columns with MRI rows"
+        )
     _, label, frame, mapping = max(candidates, key=lambda item: item[0])
     result = frame.loc[
         frame[mapping["modality"]].astype(str).str.contains(MRI_PATTERN, na=False),
@@ -80,7 +90,9 @@ def extract_activity(tables: list[tuple[str, pd.DataFrame]]) -> tuple[pd.DataFra
     ].copy()
     result.columns = ["provider_code", "period", "actual"]
     result["provider_code"] = result["provider_code"].astype(str).str.strip().str.upper()
-    result["period"] = pd.to_datetime(result["period"], errors="coerce").dt.to_period("M").astype(str)
+    result["period"] = (
+        pd.to_datetime(result["period"], errors="coerce").dt.to_period("M").astype(str)
+    )
     result["actual"] = pd.to_numeric(result["actual"], errors="coerce")
     result = result.dropna(subset=["actual"])
     result = result[result["provider_code"].ne("") & result["period"].ne("NaT")]
@@ -94,14 +106,20 @@ def add_predictions(activity: pd.DataFrame) -> tuple[pd.DataFrame, str, dict[str
     frame = activity.copy()
     grouped = frame.groupby("provider_code", sort=False)["actual"]
     frame["lag_1"] = grouped.shift(1)
-    frame["trailing_3"] = grouped.transform(lambda values: values.shift(1).rolling(3, min_periods=1).mean())
+    frame["trailing_3"] = grouped.transform(
+        lambda values: values.shift(1).rolling(3, min_periods=1).mean()
+    )
     periods = sorted(frame["period"].unique())
     validation = set(periods[-4:-2]) if len(periods) >= 6 else set(periods[-2:])
     scores: dict[str, float] = {}
     for candidate in ("lag_1", "trailing_3"):
         sample = frame[frame["period"].isin(validation)].dropna(subset=[candidate])
         denominator = sample["actual"].abs().sum()
-        scores[candidate] = float((sample["actual"] - sample[candidate]).abs().sum() / denominator) if denominator else float("inf")
+        scores[candidate] = (
+            float((sample["actual"] - sample[candidate]).abs().sum() / denominator)
+            if denominator
+            else float("inf")
+        )
     selected = min(scores, key=scores.get)
     frame["predicted"] = frame[selected]
     frame = frame.dropna(subset=["predicted"]).reset_index(drop=True)
@@ -136,8 +154,12 @@ def score_providers(frame: pd.DataFrame, holdout_months: int = 2) -> pd.DataFram
             "holdout_months": group["period"].nunique(),
             "actual_total": float(actual),
             "predicted_total": float(predicted),
-            "wape": float((group["actual"] - group["predicted"]).abs().sum() / abs(actual)) if actual else np.nan,
-            "throughput_error": float(abs(predicted - actual) / abs(actual)) if actual else np.nan,
+            "wape": float((group["actual"] - group["predicted"]).abs().sum() / abs(actual))
+            if actual
+            else np.nan,
+            "throughput_error": float(abs(predicted - actual) / abs(actual))
+            if actual
+            else np.nan,
         }
         if "mri_scanners" in group:
             scanners = pd.to_numeric(group["mri_scanners"], errors="coerce").dropna()
@@ -156,15 +178,24 @@ def run(raw_dir: Path, output_dir: Path) -> None:
     capacity_matches = 0
     if capacity is not None:
         before = len(benchmark)
-        benchmark = benchmark.merge(capacity, on="provider_code", how="left", validate="many_to_one")
+        benchmark = benchmark.merge(
+            capacity, on="provider_code", how="left", validate="many_to_one"
+        )
         assert len(benchmark) == before
         capacity_matches = int(benchmark["mri_scanners"].notna().sum())
     scores = score_providers(benchmark)
     benchmark.to_csv(output_dir / "benchmark_input.csv", index=False)
     scores.to_csv(output_dir / "provider_scores.csv", index=False)
-    (output_dir / "schema_inventory.json").write_text(json.dumps(inventory, indent=2), encoding="utf-8")
-    national_actual = float(benchmark[benchmark["period"].isin(sorted(benchmark["period"].unique())[-2:])]["actual"].sum())
-    national_predicted = float(benchmark[benchmark["period"].isin(sorted(benchmark["period"].unique())[-2:])]["predicted"].sum())
+    (output_dir / "schema_inventory.json").write_text(
+        json.dumps(inventory, indent=2), encoding="utf-8"
+    )
+    holdout_periods = sorted(benchmark["period"].unique())[-2:]
+    national_actual = float(
+        benchmark[benchmark["period"].isin(holdout_periods)]["actual"].sum()
+    )
+    national_predicted = float(
+        benchmark[benchmark["period"].isin(holdout_periods)]["predicted"].sum()
+    )
     metadata = {
         "activity_source_table": source_table,
         "baseline_selected": baseline,
@@ -175,10 +206,16 @@ def run(raw_dir: Path, output_dir: Path) -> None:
         "capacity_joined_rows": capacity_matches,
         "national_holdout_actual": national_actual,
         "national_holdout_predicted": national_predicted,
-        "national_holdout_wape": float(abs(national_predicted - national_actual) / abs(national_actual)) if national_actual else None,
+        "national_holdout_wape": float(
+            abs(national_predicted - national_actual) / abs(national_actual)
+        )
+        if national_actual
+        else None,
         "claim_limit": "External operational benchmark only; not clinical validation or causal inference.",
     }
-    (output_dir / "run_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    (output_dir / "run_metadata.json").write_text(
+        json.dumps(metadata, indent=2), encoding="utf-8"
+    )
     lines = [
         "# NHS MRI external benchmark",
         "",
@@ -186,7 +223,9 @@ def run(raw_dir: Path, output_dir: Path) -> None:
         f"- Providers: {metadata['providers']}",
         f"- Months: {metadata['months']}",
         f"- Selected leakage-free baseline: `{baseline}`",
-        f"- National holdout WAPE: {metadata['national_holdout_wape']:.4f}" if metadata["national_holdout_wape"] is not None else "- National holdout WAPE: unavailable",
+        f"- National holdout WAPE: {metadata['national_holdout_wape']:.4f}"
+        if metadata["national_holdout_wape"] is not None
+        else "- National holdout WAPE: unavailable",
         f"- Rows matched to MRI scanner capacity: {capacity_matches}",
         "",
         "Results are derived from public operational data and are not clinical validation.",
