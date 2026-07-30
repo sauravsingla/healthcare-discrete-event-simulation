@@ -1,0 +1,47 @@
+name: issue-10-patcher
+
+on:
+  pull_request:
+    branches: [fix/baseline-quality-gate]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'fix/issue-10-dynamic-capacity'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/issue-10-dynamic-capacity
+      - name: Rebalance before state snapshots
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/healthcare_des/advanced_engine.py')
+          text = path.read_text()
+          old = '''    def _track_state(self):
+        while True:
+            minute = int(self.env.now % 1440)
+            self.state.append(
+'''
+          new = '''    def _track_state(self):
+        while True:
+            yield self.env.process(self.clerks.rebalance())
+            yield self.env.process(self.radiographers.rebalance())
+            yield self.env.process(self.radiologists.rebalance())
+            minute = int(self.env.now % 1440)
+            self.state.append(
+'''
+          if old not in text:
+              raise SystemExit('state tracker block not found')
+          path.write_text(text.replace(old, new))
+          PY
+      - name: Commit source fix
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/healthcare_des/advanced_engine.py
+          git commit -m 'fix: rebalance dynamic capacity before state snapshots'
+          git push origin HEAD:fix/issue-10-dynamic-capacity
