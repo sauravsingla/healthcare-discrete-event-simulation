@@ -384,10 +384,12 @@ class AdvancedMRIModel:
         started_wait = self.env.now
         token = capacity.tokens.get(1)
         acquired = False
+
         def mark_acquired(_event):
             nonlocal acquired
             acquired = True
             capacity.busy += 1
+
         token.callbacks.append(mark_acquired)
         timeout = self.env.timeout(self._remaining_patience(deadline))
         outcome = yield token | timeout
