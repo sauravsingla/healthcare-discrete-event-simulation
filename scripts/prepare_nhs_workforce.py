@@ -62,17 +62,11 @@ def prepare_workforce(source: Path, output: Path) -> pd.DataFrame:
     if workforce.empty:
         raise ValueError("No imaging workforce rows found in the supplied file")
 
-    workforce["provider_code"] = (
-        workforce[provider_col].astype(str).str.strip().str.upper()
-    )
+    workforce["provider_code"] = workforce[provider_col].astype(str).str.strip().str.upper()
     workforce["reporting_year"] = workforce[year_col].astype(str).str.strip().str[:4]
-    workforce["imaging_workforce_fte"] = pd.to_numeric(
-        workforce[fte_col], errors="coerce"
-    )
+    workforce["imaging_workforce_fte"] = pd.to_numeric(workforce[fte_col], errors="coerce")
     workforce = workforce.dropna(subset=["imaging_workforce_fte"])
-    workforce = workforce[
-        workforce["provider_code"].ne("") & workforce["reporting_year"].ne("")
-    ]
+    workforce = workforce[workforce["provider_code"].ne("") & workforce["reporting_year"].ne("")]
     if workforce.empty:
         raise ValueError("No valid provider-year workforce rows remain after cleaning")
 
@@ -83,12 +77,8 @@ def prepare_workforce(source: Path, output: Path) -> pd.DataFrame:
     )
     result["workforce_status"] = "valid"
     result.loc[result["imaging_workforce_fte"].eq(0), "workforce_status"] = "zero"
-    result.loc[
-        result["imaging_workforce_fte"].lt(0), "workforce_status"
-    ] = "invalid_negative"
-    result.loc[
-        result["imaging_workforce_fte"].gt(10000), "workforce_status"
-    ] = "implausible_high"
+    result.loc[result["imaging_workforce_fte"].lt(0), "workforce_status"] = "invalid_negative"
+    result.loc[result["imaging_workforce_fte"].gt(10000), "workforce_status"] = "implausible_high"
 
     output.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(output, index=False)
@@ -118,12 +108,8 @@ def join_benchmark(
 
     benchmark = benchmark.copy()
     workforce = workforce.copy()
-    benchmark["provider_code"] = (
-        benchmark["provider_code"].astype(str).str.strip().str.upper()
-    )
-    workforce["provider_code"] = (
-        workforce["provider_code"].astype(str).str.strip().str.upper()
-    )
+    benchmark["provider_code"] = benchmark["provider_code"].astype(str).str.strip().str.upper()
+    workforce["provider_code"] = workforce["provider_code"].astype(str).str.strip().str.upper()
     benchmark["reporting_year"] = benchmark["period"].astype(str).str[:4]
     workforce["reporting_year"] = workforce["reporting_year"].astype(str).str[:4]
 
@@ -133,8 +119,8 @@ def join_benchmark(
         how="left",
         validate="many_to_one",
     )
-    result["workforce_join_status"] = result["imaging_workforce_fte"].notna().map(
-        {True: "matched", False: "missing"}
+    result["workforce_join_status"] = (
+        result["imaging_workforce_fte"].notna().map({True: "matched", False: "missing"})
     )
     valid_fte = result["imaging_workforce_fte"].gt(0)
     for source_column, output_column in (
