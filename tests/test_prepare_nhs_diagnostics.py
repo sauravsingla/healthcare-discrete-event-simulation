@@ -61,6 +61,24 @@ def test_prepare_supports_year_and_month_columns(tmp_path: Path) -> None:
     assert result.loc[0, "activity_per_calendar_day"] == 1.0
 
 
+def test_prepare_prefers_modality_over_total_tests_column(tmp_path: Path) -> None:
+    source = tmp_path / "dm01.csv"
+    pd.DataFrame(
+        {
+            "Provider Code": ["R02"],
+            "Reporting Period": ["2025-06"],
+            "Modality": ["Magnetic Resonance Imaging"],
+            "Total Tests": [60],
+        }
+    ).to_csv(source, index=False)
+
+    result = module.prepare(source, tmp_path / "out.csv")
+
+    assert result.loc[0, "provider_code"] == "R02"
+    assert result.loc[0, "period"] == "2025-06"
+    assert result.loc[0, "mri_activity"] == 60.0
+
+
 def test_prepare_rejects_file_without_mri_rows(tmp_path: Path) -> None:
     source = tmp_path / "dm01.csv"
     pd.DataFrame(
