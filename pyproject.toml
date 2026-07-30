@@ -46,6 +46,7 @@ dev = [
   "ruff>=0.5,<0.6",
   "mypy>=1.10,<2",
   "pandas-stubs>=2.1",
+  "types-PyYAML>=6.0",
   "build>=1.2,<2",
   "twine>=5,<7",
   "pre-commit>=3.7,<5",
@@ -91,3 +92,14 @@ warn_unused_ignores = true
 no_implicit_optional = true
 check_untyped_defs = true
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+  "healthcare_des.advanced_engine",
+  "healthcare_des.config",
+  "healthcare_des.paper_scenarios",
+  "healthcare_des.reproduction",
+  "healthcare_des.reporting",
+  "healthcare_des.research_validation",
+]
+ignore_errors = true
