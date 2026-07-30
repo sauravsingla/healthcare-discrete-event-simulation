@@ -49,7 +49,9 @@ def test_safe_extract_rejects_path_traversal(tmp_path: Path) -> None:
         MODULE.safe_extract_zip(archive, tmp_path / "out")
 
 
-def test_download_and_receipt_from_local_https_stub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_download_and_receipt_from_local_https_stub(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     source_file = tmp_path / "source.csv"
     source_file.write_text("provider_code,value\nAAA,1\n", encoding="utf-8")
     manifest = tmp_path / "manifest.json"
