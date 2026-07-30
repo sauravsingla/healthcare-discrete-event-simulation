@@ -1,0 +1,116 @@
+name: NHS end-to-end benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/nhs-end-to-end-benchmark
+    paths:
+      - .github/workflows/nhs-end-to-end.yml
+      - config/nhs_public_sources.json
+      - scripts/fetch_nhs_public_sources.py
+      - scripts/run_nhs_end_to_end.py
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . openpyxl
+
+      - name: Download official NHS releases
+        run: |
+          python scripts/fetch_nhs_public_sources.py \
+            --manifest config/nhs_public_sources.json \
+            --output-dir data/raw/nhs_public \
+            --overwrite
+
+      - name: Execute complete MRI benchmark
+        id: benchmark
+        run: |
+          python scripts/run_nhs_end_to_end.py \
+            --raw-dir data/raw/nhs_public \
+            --output-dir outputs/nhs_end_to_end
+
+      - name: Copy provenance receipt
+        if: always()
+        run: |
+          mkdir -p outputs/nhs_end_to_end
+          if [ -f data/raw/nhs_public/download_receipt.json ]; then
+            cp data/raw/nhs_public/download_receipt.json \
+              outputs/nhs_end_to_end/download_receipt.json
+          fi
+
+      - name: Validate derived outputs
+        if: steps.benchmark.outcome == 'success'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+
+          root = Path("outputs/nhs_end_to_end")
+          required = {
+              "benchmark_input.csv",
+              "provider_scores.csv",
+              "run_metadata.json",
+              "schema_inventory.json",
+              "benchmark_report.md",
+              "download_receipt.json",
+          }
+          missing = sorted(name for name in required if not (root / name).is_file())
+          if missing:
+              raise SystemExit(f"Missing derived outputs: {missing}")
+          benchmark = pd.read_csv(root / "benchmark_input.csv")
+          scores = pd.read_csv(root / "provider_scores.csv")
+          metadata = json.loads((root / "run_metadata.json").read_text(encoding="utf-8"))
+          if benchmark.empty or scores.empty:
+              raise SystemExit("Benchmark or provider scores are empty")
+          if metadata.get("providers", 0) < 1 or metadata.get("months", 0) < 6:
+              raise SystemExit(f"Insufficient benchmark coverage: {metadata}")
+          forbidden = {"patient_id", "nhs_number", "date_of_birth"}
+          columns = {str(column).lower() for column in benchmark.columns}
+          if columns.intersection(forbidden):
+              raise SystemExit("Unexpected patient-level columns in derived output")
+          PY
+
+      - name: Publish workflow summary
+        if: steps.benchmark.outcome == 'success'
+        run: |
+          cat outputs/nhs_end_to_end/benchmark_report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish failure summary
+        if: failure()
+        run: |
+          echo "# NHS MRI benchmark failure diagnostics" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f outputs/nhs_end_to_end/failure_diagnostics.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat outputs/nhs_end_to_end/failure_diagnostics.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "Schema inventory and provenance are attached as workflow artifacts." \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload derived benchmark results and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nhs-mri-derived-benchmark-results
+          path: outputs/nhs_end_to_end
+          if-no-files-found: error
+          retention-days: 30
