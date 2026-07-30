@@ -6,16 +6,36 @@ The format follows Keep a Changelog principles and the project uses semantic ver
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-30
+
 ### Added
 
-- Installed `healthcare-des-advanced-benchmark` command.
-- Branch coverage configuration and strict pytest configuration.
-- Expanded package classifiers and project links.
+- Official NHS public-source manifest covering six versioned releases.
+- Provenance-tracked acquisition with SHA-256 checksums and safe ZIP extraction.
+- DM01 provider-month MRI activity preparation.
+- DID MRI activity, patient-source and turnaround ingestion.
+- NIDC MRI scanner asset integration and per-scanner benchmarking.
+- NHS imaging workforce integration and workforce-normalised metrics.
+- Leakage-free provider-level temporal holdout scoring.
+- Reproducible real-data benchmark runner with CSV, JSON and Markdown outputs.
+- End-to-end GitHub Actions workflow for official NHS MRI benchmark execution.
+- Schema inventory, failure diagnostics and derived benchmark workflow artifacts.
+- README documentation distinguishing synthetic benchmark results from official NHS multi-source benchmark capability.
 
 ### Changed
 
-- Corrected contributor installation and verification instructions.
-- Strengthened package metadata for built distributions.
+- Strengthened dynamic capacity accounting and MRI failure/repair behaviour.
+- Restored the strict 80% test-coverage gate without test deselection.
+- Expanded regression coverage across Python 3.10, 3.11 and 3.12.
+- Added `openpyxl` as a runtime dependency for official NHS Excel workbooks.
+- Upgraded the release workflow to create a GitHub Release and attach source and wheel distributions for version tags.
+- Increased the package version from 1.1.0 to 1.2.0.
+
+### Validation and claim limits
+
+- Public NHS inputs are aggregate operational data, not patient-level data.
+- NHS benchmarking is external operational evaluation and is not clinical validation or causal inference.
+- Quantitative NHS result claims should cite retained `run_metadata.json`, `provider_scores.csv` and `benchmark_report.md` artifacts.
 
 ## [0.4.0] - 2026-07-21
 
@@ -56,5 +76,6 @@ Before creating a tagged release:
 5. Create a version tag and release notes.
 6. Attach or link reproducible output artifacts.
 
-[Unreleased]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.1.0...v1.2.0
 [0.4.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/releases/tag/v0.4.0
