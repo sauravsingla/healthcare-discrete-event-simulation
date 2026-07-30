@@ -94,9 +94,12 @@ def prepare(source: Path, output: Path) -> pd.DataFrame:
         required=False,
     )
 
-    mri = frame[
-        frame[test_col].astype(str).str.contains(MRI_PATTERN, case=False, na=False, regex=True)
-    ].copy()
+    mri_mask = (
+        frame[test_col]
+        .astype(str)
+        .str.contains(MRI_PATTERN, case=False, na=False, regex=True)
+    )
+    mri = frame[mri_mask].copy()
     if mri.empty:
         raise ValueError("No MRI activity rows found in the supplied NHS file")
 
