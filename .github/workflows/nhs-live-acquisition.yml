@@ -1,0 +1,126 @@
+name: NHS live source acquisition
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/nhs-live-acquisition
+    paths:
+      - .github/workflows/nhs-live-acquisition.yml
+      - config/nhs_public_sources.json
+      - scripts/fetch_nhs_public_sources.py
+
+permissions:
+  contents: read
+
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download official NHS sources
+        run: |
+          python scripts/fetch_nhs_public_sources.py \
+            --manifest config/nhs_public_sources.json \
+            --output-dir data/raw/nhs_public \
+            --overwrite
+
+      - name: Validate receipt and file signatures
+        run: |
+          python - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+
+          receipt_path = Path("data/raw/nhs_public/download_receipt.json")
+          payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+          sources = payload.get("sources", [])
+          if len(sources) != 6:
+              raise SystemExit(f"Expected 6 sources, found {len(sources)}")
+
+          inventory = []
+          for source in sources:
+              path = Path(source["path"])
+              if not path.is_file() or path.stat().st_size <= 0:
+                  raise SystemExit(f"Missing or empty source: {source['id']}")
+              suffix = path.suffix.lower()
+              if suffix == ".zip" and not zipfile.is_zipfile(path):
+                  raise SystemExit(f"Invalid ZIP archive: {source['id']}")
+              if suffix == ".xlsx":
+                  signature = path.read_bytes()[:4]
+                  if signature != b"PK\x03\x04":
+                      raise SystemExit(f"Invalid XLSX signature: {source['id']}")
+              inventory.append(
+                  {
+                      "id": source["id"],
+                      "release": source["release"],
+                      "bytes": source["bytes"],
+                      "sha256": source["sha256"],
+                      "extracted_files": source.get("extracted_files", []),
+                  }
+              )
+
+          evidence = Path("outputs/nhs_live_acquisition")
+          evidence.mkdir(parents=True, exist_ok=True)
+          (evidence / "download_receipt.json").write_text(
+              json.dumps(payload, indent=2), encoding="utf-8"
+          )
+          (evidence / "source_inventory.json").write_text(
+              json.dumps({"sources": inventory}, indent=2), encoding="utf-8"
+          )
+          PY
+
+      - name: Write workflow summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          inventory = json.loads(
+              Path("outputs/nhs_live_acquisition/source_inventory.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          lines = [
+              "# NHS live source acquisition",
+              "",
+              "| Source | Release | Bytes | SHA-256 | Extracted files |",
+              "|---|---|---:|---|---:|",
+          ]
+          for source in inventory["sources"]:
+              lines.append(
+                  f"| {source['id']} | {source['release']} | {source['bytes']} | "
+                  f"`{source['sha256']}` | {len(source['extracted_files'])} |"
+              )
+          lines.extend(
+              [
+                  "",
+                  "Raw NHS files were not uploaded as workflow artifacts.",
+                  "Only provenance receipts and inventories are retained.",
+              ]
+          )
+          summary = "\n".join(lines) + "\n"
+          Path("outputs/nhs_live_acquisition/README.md").write_text(
+              summary, encoding="utf-8"
+          )
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as stream:
+              stream.write(summary)
+          PY
+
+      - name: Upload acquisition evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: nhs-live-acquisition-evidence
+          path: outputs/nhs_live_acquisition
+          if-no-files-found: error
+          retention-days: 30
