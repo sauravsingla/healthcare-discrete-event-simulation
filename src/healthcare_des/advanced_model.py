@@ -17,9 +17,13 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
                     "time": self.env.now,
                     "minute_of_day": minute,
                     "is_open": minute < self.config.operating_hours * 60,
-                    "mri_queue": sum(len(machine.resource.queue) for machine in self.machines),
+                    "mri_queue": sum(
+                        len(machine.resource.queue) for machine in self.machines
+                    ),
                     "mri_busy": sum(machine.resource.count for machine in self.machines),
-                    "mri_available": sum(machine.available for machine in self.machines),
+                    "mri_available": sum(
+                        machine.available for machine in self.machines
+                    ),
                     "clerk_target": self.clerks.target(minute),
                     "clerk_busy": self.clerks.busy,
                     "clerk_tokens": self.clerks.tokens.level,
@@ -29,7 +33,9 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
                     "radiologist_target": self.radiologists.target(minute),
                     "radiologist_busy": self.radiologists.busy,
                     "radiologist_tokens": self.radiologists.tokens.level,
-                    "machine_states": "|".join(machine.state for machine in self.machines),
+                    "machine_states": "|".join(
+                        machine.state for machine in self.machines
+                    ),
                 }
             )
             yield self.env.timeout(self.config.tracking_interval_minutes)
