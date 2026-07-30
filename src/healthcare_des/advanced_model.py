@@ -37,7 +37,7 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
 
 # The engine runner resolves this global at execution time. Rebinding it keeps all
 # public entry points on the corrected implementation without duplicating runners.
-_engine.AdvancedMRIModel = AdvancedMRIModel
+_engine.AdvancedMRIModel = AdvancedMRIModel  # type: ignore[misc]
 
 AdvancedScenarioConfig = _engine.AdvancedScenarioConfig
 AdvancedSimulationResult = _engine.AdvancedSimulationResult
