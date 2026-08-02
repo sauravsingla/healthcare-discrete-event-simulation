@@ -132,3 +132,7 @@ Acceptance thresholds must be chosen before final evaluation. Examples include:
 - primary operational metrics fall within agreed calibration intervals.
 
 Thresholds should reflect intended use and should not be retrofitted to observed results.
+
+## Continuous-integration interpretation
+
+A green workflow verifies the committed code and tests for that exact revision. A failed or stale workflow from an earlier revision must not be treated as the status of a later corrected commit; the commit SHA and workflow run must be matched when reporting CI evidence.
