@@ -64,9 +64,7 @@ def run_paper_scenarios(
     selected = PAPER_SCENARIOS if scenarios is None else scenarios
     rows: list[dict[str, float | str]] = []
     for name, changes in selected.items():
-        config = replace(
-            base, name=name, **_coerce_windows(changes)
-        )  # type: ignore[arg-type]
+        config = replace(base, name=name, **_coerce_windows(changes))  # type: ignore[arg-type]
         config.validate()
         summary = summarise_advanced(run_advanced_replications(config, replications))
         rows.append({"name": name, **summary})
