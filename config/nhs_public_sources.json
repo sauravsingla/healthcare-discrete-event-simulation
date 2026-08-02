@@ -1,6 +1,94 @@
 {
   "sources": [
     {
+      "id": "dm01_2025_04",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "April 2025 revised 16 April 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/04/DM01-APRIL-2025-full-extract_M0N7G.zip",
+      "filename": "dm01_april_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_05",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "May 2025 revised 16 April 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/04/DM01-MAY-2025-full-extract_M0N7G.zip",
+      "filename": "dm01_may_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_06",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "June 2025 revised 16 April 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/04/DM01-JUNE-2025-full-extract_M0N7G.zip",
+      "filename": "dm01_june_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_07",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "July 2025 revised 16 April 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/04/DM01-JULY-2025-full-extract_M0N7G.zip",
+      "filename": "dm01_july_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_08",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "August 2025 revised 16 April 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/04/DM01-AUGUST-2025-full-extract_M0N7G.zip",
+      "filename": "dm01_august_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_09",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "September 2025",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2025/11/DM01-SEPTEMBER-2025-full-extract_M0NX3.zip",
+      "filename": "dm01_september_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_10",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "October 2025",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2025/12/DM01-OCTOBER-2025-full-extract_F5GI8.zip",
+      "filename": "dm01_october_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_11",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "November 2025",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/01/DM01-NOVEMBER-2025-full-extract_8HM0N.zip",
+      "filename": "dm01_november_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2025_12",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "December 2025",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/02/DM01-DECEMBER-2025-full-extract_EDNKH.zip",
+      "filename": "dm01_december_2025.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2026_01",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "January 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/03/DM01-JANUARY-2026-full-extract_42P3N.zip",
+      "filename": "dm01_january_2026.zip",
+      "archive": "zip"
+    },
+    {
+      "id": "dm01_2026_02",
+      "name": "DM01 monthly diagnostics full extract",
+      "release": "February 2026",
+      "url": "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/04/DM01-FEBRUARY-2026-full-extract_M0N7G.zip",
+      "filename": "dm01_february_2026.zip",
+      "archive": "zip"
+    },
+    {
       "id": "dm01_2026_03",
       "name": "DM01 monthly diagnostics full extract",
       "release": "March 2026",
