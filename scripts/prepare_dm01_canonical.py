@@ -24,7 +24,32 @@ def _find_column(frame: pd.DataFrame, candidates: tuple[str, ...]) -> object | N
     return None
 
 
-def _normalise_period(series: pd.Series) -> pd.Series:
+def _period_from_filename(path: Path) -> str | None:
+    text = path.stem.lower()
+    months = {
+        "january": 1,
+        "february": 2,
+        "march": 3,
+        "april": 4,
+        "may": 5,
+        "june": 6,
+        "july": 7,
+        "august": 8,
+        "september": 9,
+        "october": 10,
+        "november": 11,
+        "december": 12,
+    }
+    year_match = re.search(r"20\d{2}", text)
+    if year_match is None:
+        return None
+    for name, month in months.items():
+        if name in text:
+            return f"{year_match.group(0)}-{month:02d}"
+    return None
+
+
+def _normalise_period(series: pd.Series, path: Path) -> pd.Series:
     text = series.astype(str).str.strip()
     parsed = pd.to_datetime(text, errors="coerce")
     unresolved = parsed.isna() & text.str.fullmatch(r"\d{6}")
@@ -32,7 +57,11 @@ def _normalise_period(series: pd.Series) -> pd.Series:
         parsed.loc[unresolved] = pd.to_datetime(
             text.loc[unresolved], format="%Y%m", errors="coerce"
         )
-    return parsed.dt.to_period("M").astype(str)
+    result = parsed.dt.to_period("M").astype(str)
+    fallback = _period_from_filename(path)
+    if fallback is not None:
+        result = result.where(result.ne("NaT"), fallback)
+    return result
 
 
 def _read_csv(path: Path) -> pd.DataFrame | None:
@@ -40,6 +69,11 @@ def _read_csv(path: Path) -> pd.DataFrame | None:
         return pd.read_csv(path, low_memory=False)
     except (UnicodeDecodeError, pd.errors.ParserError, pd.errors.EmptyDataError):
         return None
+
+
+def _numeric(series: pd.Series) -> pd.Series:
+    cleaned = series.astype(str).str.replace(",", "", regex=False).str.strip()
+    return pd.to_numeric(cleaned, errors="coerce")
 
 
 def prepare_file(path: Path, output_dir: Path) -> Path | None:
@@ -56,44 +90,35 @@ def prepare_file(path: Path, output_dir: Path) -> Path | None:
         frame,
         ("totalactivity", "activity", "count", "tests", "value"),
     )
-    if provider is None or period is None or activity is None:
+    if provider is None or activity is None:
         return None
 
-    diagnostic_columns = [
-        column
-        for column in frame.columns
-        if any(
-            token in _key(column)
-            for token in ("diagnostictest", "modality", "procedure", "testtype")
-        )
-    ]
-    if not diagnostic_columns:
-        return None
-
-    mask = pd.Series(False, index=frame.index)
-    for column in diagnostic_columns:
-        values = frame[column].astype(str).str.strip()
-        mask |= values.str.contains(
+    text_frame = frame.astype(str)
+    mask = text_frame.apply(
+        lambda column: column.str.contains(
             r"\b(?:MRI|Magnetic Resonance(?: Imaging)?)\b",
             case=False,
             regex=True,
             na=False,
         )
-
-    if not mask.any():
-        for column in diagnostic_columns:
-            codes = pd.to_numeric(frame[column], errors="coerce")
-            mask |= codes.eq(1)
-
+    ).any(axis=1)
     if not mask.any():
         return None
+
+    if period is None:
+        fallback = _period_from_filename(path)
+        if fallback is None:
+            return None
+        periods = pd.Series(fallback, index=frame.index[mask])
+    else:
+        periods = _normalise_period(frame.loc[mask, period], path)
 
     result = pd.DataFrame(
         {
             "provider_code": frame.loc[mask, provider],
-            "period": _normalise_period(frame.loc[mask, period]),
+            "period": periods,
             "modality": "MRI",
-            "activity": pd.to_numeric(frame.loc[mask, activity], errors="coerce"),
+            "activity": _numeric(frame.loc[mask, activity]),
         }
     )
     result["provider_code"] = result["provider_code"].astype(str).str.strip().str.upper()
@@ -103,9 +128,9 @@ def prepare_file(path: Path, output_dir: Path) -> Path | None:
         & result["provider_code"].ne("NAN")
         & result["period"].ne("NaT")
     ]
-    result = result.groupby(
-        ["provider_code", "period", "modality"], as_index=False
-    )["activity"].sum()
+    result = result.groupby(["provider_code", "period", "modality"], as_index=False)[
+        "activity"
+    ].sum()
     if result.empty:
         return None
 
