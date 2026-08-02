@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from scripts.validate_nhs_benchmark_outputs import validate
+_MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "validate_nhs_benchmark_outputs.py"
+_SPEC = importlib.util.spec_from_file_location("validate_nhs_benchmark_outputs", _MODULE_PATH)
+assert _SPEC is not None and _SPEC.loader is not None
+_MODULE = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_MODULE)
+validate = _MODULE.validate
 
 
 def write_valid_outputs(root: Path) -> None:
