@@ -47,7 +47,10 @@ def verify_targets(
             continue
         if target.metric not in indexed.columns:
             raise ValueError(f"Metric is not available: {target.metric}")
-        actual = float(indexed.loc[target.scenario, target.metric])
+        actual_value = indexed.loc[target.scenario, target.metric]
+        if isinstance(actual_value, pd.Series):
+            raise ValueError(f"Scenario is not unique: {target.scenario}")
+        actual = float(actual_value)  # type: ignore[arg-type]
         absolute_error = abs(actual - target.expected)
         rows.append(
             {
