@@ -20,7 +20,10 @@ def save_scenario_figure(results: pd.DataFrame, path: str | Path) -> Path:
     figure, axis = plt.subplots(figsize=(10, 6))
     axis.scatter(results["mean_wait_minutes"], results["throughput_per_day"])
     for row in results.itertuples(index=False):
-        axis.annotate(str(row.name), (row.mean_wait_minutes, row.throughput_per_day))
+        axis.annotate(
+            str(row.name),
+            (float(row.mean_wait_minutes), float(row.throughput_per_day)),
+        )
     axis.set_xlabel("Mean waiting time (minutes)")
     axis.set_ylabel("Throughput per day")
     axis.set_title("Scenario trade-off: waiting time versus throughput")
@@ -80,7 +83,7 @@ def save_pdf_report(
             )
             if column in results.columns
         ]
-        table = figure.add_axes([0.06, 0.12, 0.88, 0.65])
+        table = figure.add_axes((0.06, 0.12, 0.88, 0.65))
         table.axis("off")
         table.table(
             cellText=results[columns].round(2).astype(str).values,
@@ -94,7 +97,10 @@ def save_pdf_report(
         axis = chart.add_subplot(111)
         axis.scatter(results["mean_wait_minutes"], results["throughput_per_day"])
         for row in results.itertuples(index=False):
-            axis.annotate(str(row.name), (row.mean_wait_minutes, row.throughput_per_day))
+            axis.annotate(
+                str(row.name),
+                (float(row.mean_wait_minutes), float(row.throughput_per_day)),
+            )
         axis.set_xlabel("Mean waiting time (minutes)")
         axis.set_ylabel("Throughput per day")
         axis.set_title("Scenario trade-off")
