@@ -32,12 +32,23 @@ def test_lifecycle_conservation_holds_for_multiple_replications() -> None:
 def test_all_reported_patient_durations_are_non_negative() -> None:
     _, patients = run_once(invariant_config())
     duration_columns = [
-        column
-        for column in patients.columns
-        if column.endswith("_minutes") or column.endswith("_wait_minutes")
+        "reception_wait_minutes",
+        "preparation_wait_minutes",
+        "mri_wait_minutes",
+        "reporting_wait_minutes",
+        "wait_minutes",
+        "system_minutes",
     ]
-    assert duration_columns, "Expected patient-level duration columns"
+    assert set(duration_columns) <= set(patients.columns)
     assert (patients[duration_columns].fillna(0) >= 0).all().all()
+
+
+def test_arrival_deviation_can_be_early_or_late() -> None:
+    _, patients = run_once(invariant_config())
+    if "arrival_deviation_minutes" in patients:
+        assert patients["arrival_deviation_minutes"].notna().all()
+        assert (patients["arrival_deviation_minutes"] < 0).any()
+        assert (patients["arrival_deviation_minutes"] > 0).any()
 
 
 def test_total_wait_equals_sum_of_stage_waits() -> None:
