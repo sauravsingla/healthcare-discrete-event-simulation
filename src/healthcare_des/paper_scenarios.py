@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from typing import Mapping
+from typing import Iterable, Mapping, cast
 
 import pandas as pd
 
@@ -51,7 +51,8 @@ def _coerce_windows(changes: Mapping[str, object]) -> dict[str, object]:
     converted = dict(changes)
     for field in ("clerk_capacity", "radiographer_capacity", "radiologist_capacity"):
         if field in converted:
-            converted[field] = tuple(CapacityWindow(*row) for row in converted[field])
+            rows = cast(Iterable[tuple[int, int, int]], converted[field])
+            converted[field] = tuple(CapacityWindow(*row) for row in rows)
     return converted
 
 
@@ -63,7 +64,9 @@ def run_paper_scenarios(
     selected = PAPER_SCENARIOS if scenarios is None else scenarios
     rows: list[dict[str, float | str]] = []
     for name, changes in selected.items():
-        config = replace(base, name=name, **_coerce_windows(changes))
+        config = replace(
+            base, name=name, **_coerce_windows(changes)
+        )  # type: ignore[arg-type]
         config.validate()
         summary = summarise_advanced(run_advanced_replications(config, replications))
         rows.append({"name": name, **summary})
@@ -92,8 +95,11 @@ def verify_paper_targets(
         metric = str(row.metric)
         if scenario not in indexed.index or metric not in indexed.columns:
             raise ValueError(f"Unknown paper target: {scenario}/{metric}")
-        observed = float(indexed.loc[scenario, metric])
-        expected = float(row.expected)
+        observed_value = indexed.loc[scenario, metric]
+        if isinstance(observed_value, pd.Series):
+            raise ValueError(f"Scenario is not unique: {scenario}")
+        observed = float(observed_value)  # type: ignore[arg-type]
+        expected = float(row.expected)  # type: ignore[arg-type]
         tolerance = float(getattr(row, "tolerance_pct", default_tolerance_pct))
         error_pct = (
             abs(observed - expected) / abs(expected) * 100 if expected else abs(observed) * 100
