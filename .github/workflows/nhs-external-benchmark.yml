@@ -1,0 +1,63 @@
+name: NHS external benchmark
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/nhs-external-benchmark.yml"
+      - "config/nhs_public_sources.json"
+      - "scripts/fetch_nhs_public_sources.py"
+      - "scripts/run_nhs_end_to_end.py"
+      - "scripts/validate_nhs_benchmark_outputs.py"
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Download, benchmark and retain NHS results
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Download official NHS public sources
+        run: |
+          python scripts/fetch_nhs_public_sources.py \
+            --output-dir data/raw/nhs_public \
+            --overwrite
+
+      - name: Run external NHS MRI benchmark
+        run: |
+          python scripts/run_nhs_end_to_end.py \
+            --raw-dir data/raw/nhs_public \
+            --output-dir outputs/nhs_external_benchmark
+
+      - name: Validate publishable benchmark evidence
+        run: |
+          python scripts/validate_nhs_benchmark_outputs.py \
+            outputs/nhs_external_benchmark
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nhs-external-benchmark-${{ github.sha }}
+          path: |
+            outputs/nhs_external_benchmark/
+            data/raw/nhs_public/download_receipt.json
+          if-no-files-found: error
+          retention-days: 90
