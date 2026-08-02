@@ -3,9 +3,25 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 import pandas as pd
+
+
+def _key(value: object) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(value).lower())
+
+
+def _find_column(frame: pd.DataFrame, candidates: tuple[str, ...]) -> object | None:
+    by_key = {_key(column): column for column in frame.columns}
+    for candidate in candidates:
+        if candidate in by_key:
+            return by_key[candidate]
+    for key, column in by_key.items():
+        if any(candidate in key for candidate in candidates):
+            return column
+    return None
 
 
 def _normalise_period(series: pd.Series) -> pd.Series:
@@ -19,47 +35,68 @@ def _normalise_period(series: pd.Series) -> pd.Series:
     return parsed.dt.to_period("M").astype(str)
 
 
-def prepare_file(path: Path, output_dir: Path) -> Path | None:
+def _read_csv(path: Path) -> pd.DataFrame | None:
     try:
-        frame = pd.read_csv(path, low_memory=False)
+        return pd.read_csv(path, low_memory=False)
     except (UnicodeDecodeError, pd.errors.ParserError, pd.errors.EmptyDataError):
         return None
 
-    required = {
-        "Period",
-        "Provider Org Code",
-        "Diagnostic Tests",
-        "Total Activity",
-    }
-    if not required.issubset(frame.columns):
+
+def prepare_file(path: Path, output_dir: Path) -> Path | None:
+    frame = _read_csv(path)
+    if frame is None or frame.empty:
         return None
 
-    modality = frame["Diagnostic Tests"].astype(str).str.strip()
-    mask = modality.str.contains(
-        r"\b(?:MRI|Magnetic Resonance(?: Imaging)?)\b",
-        case=False,
-        regex=True,
-        na=False,
+    provider = _find_column(
+        frame,
+        ("providerorgcode", "providercode", "organisationcode", "orgcode"),
     )
-    if not mask.any() and "Diagnostic Tests Sort Order" in frame.columns:
-        codes = pd.to_numeric(frame["Diagnostic Tests Sort Order"], errors="coerce")
-        mask = codes.eq(1)
+    period = _find_column(frame, ("period", "month", "reportingperiod"))
+    activity = _find_column(
+        frame,
+        ("totalactivity", "activity", "count", "tests", "value"),
+    )
+    if provider is None or period is None or activity is None:
+        return None
+
+    diagnostic_columns = [
+        column
+        for column in frame.columns
+        if any(
+            token in _key(column)
+            for token in ("diagnostictest", "modality", "procedure", "testtype")
+        )
+    ]
+    if not diagnostic_columns:
+        return None
+
+    mask = pd.Series(False, index=frame.index)
+    for column in diagnostic_columns:
+        values = frame[column].astype(str).str.strip()
+        mask |= values.str.contains(
+            r"\b(?:MRI|Magnetic Resonance(?: Imaging)?)\b",
+            case=False,
+            regex=True,
+            na=False,
+        )
+
+    if not mask.any():
+        for column in diagnostic_columns:
+            codes = pd.to_numeric(frame[column], errors="coerce")
+            mask |= codes.eq(1)
+
     if not mask.any():
         return None
 
     result = pd.DataFrame(
         {
-            "provider_code": frame.loc[mask, "Provider Org Code"],
-            "period": _normalise_period(frame.loc[mask, "Period"]),
+            "provider_code": frame.loc[mask, provider],
+            "period": _normalise_period(frame.loc[mask, period]),
             "modality": "MRI",
-            "activity": pd.to_numeric(
-                frame.loc[mask, "Total Activity"], errors="coerce"
-            ),
+            "activity": pd.to_numeric(frame.loc[mask, activity], errors="coerce"),
         }
     )
-    result["provider_code"] = (
-        result["provider_code"].astype(str).str.strip().str.upper()
-    )
+    result["provider_code"] = result["provider_code"].astype(str).str.strip().str.upper()
     result = result.dropna(subset=["activity"])
     result = result[
         result["provider_code"].ne("")
@@ -82,11 +119,13 @@ def run(root: Path, output_dir: Path) -> int:
     written = [
         target
         for path in sorted(root.rglob("*.csv"))
+        if output_dir not in path.parents
         if (target := prepare_file(path, output_dir)) is not None
     ]
     if len(written) < 6:
         raise ValueError(
-            f"Only {len(written)} canonical DM01 monthly files were created; at least 6 are required"
+            f"Only {len(written)} canonical DM01 monthly files were created; "
+            "at least 6 are required"
         )
     print(f"Created {len(written)} canonical DM01 MRI files in {output_dir}")
     return len(written)
