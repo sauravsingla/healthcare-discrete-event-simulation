@@ -1,0 +1,33 @@
+{
+  "activity_source_tables": [
+    "canonical_dm01/DM01-APRIL-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-AUGUST-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-DECEMBER-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-FEBRUARY-2026-full-extract_canonical.csv",
+    "canonical_dm01/DM01-JANUARY-2026-full-extract_canonical.csv",
+    "canonical_dm01/DM01-JULY-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-JUNE-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-MARCH-2026-full-extract_canonical.csv",
+    "canonical_dm01/DM01-MAY-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-NOVEMBER-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-OCTOBER-2025-full-extract_canonical.csv",
+    "canonical_dm01/DM01-SEPTEMBER-2025-full-extract_canonical.csv"
+  ],
+  "baseline_selected": "lag_1",
+  "validation_wape": {
+    "lag_1": 0.06782607430682844,
+    "trailing_3": 0.06839987845050251
+  },
+  "providers": 463,
+  "months": 11,
+  "rows": 4979,
+  "capacity_joined_rows": 1480,
+  "national_holdout_actual": 840480.0,
+  "national_holdout_predicted": 821577.0,
+  "national_holdout_wape": 0.022490719588806395,
+  "claim_limit": "External operational benchmark only; not clinical validation or causal inference.",
+  "workflow_run_id": 30742975228,
+  "workflow_artifact_id": 8831932312,
+  "source_commit": "b03606877787955ff51dcf727c6f4243688e675e",
+  "artifact_sha256": "4a91bc13ae9a038718f5591290189cd39dc9a97427078c123a311bf963a705fe"
+}
