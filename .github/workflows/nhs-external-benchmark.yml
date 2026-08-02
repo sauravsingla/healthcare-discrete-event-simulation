@@ -7,6 +7,7 @@ on:
       - ".github/workflows/nhs-external-benchmark.yml"
       - "config/nhs_public_sources.json"
       - "scripts/fetch_nhs_public_sources.py"
+      - "scripts/normalise_dm01_mri_codes.py"
       - "scripts/run_nhs_end_to_end.py"
       - "scripts/validate_nhs_benchmark_outputs.py"
 
@@ -39,6 +40,10 @@ jobs:
           python scripts/fetch_nhs_public_sources.py \
             --output-dir data/raw/nhs_public \
             --overwrite
+
+      - name: Normalise coded DM01 MRI values
+        run: |
+          python scripts/normalise_dm01_mri_codes.py data/raw/nhs_public
 
       - name: Run external NHS MRI benchmark
         run: |
