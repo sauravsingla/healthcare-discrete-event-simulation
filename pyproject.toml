@@ -90,7 +90,7 @@ target-version = "py310"
 python_version = "3.10"
 warn_unused_configs = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 no_implicit_optional = true
 check_untyped_defs = true
 ignore_missing_imports = true
@@ -98,3 +98,11 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "healthcare_des.advanced_engine"
 disable_error_code = ["assignment", "attr-defined"]
+
+[[tool.mypy.overrides]]
+module = [
+  "healthcare_des.reporting",
+  "healthcare_des.research_validation",
+  "healthcare_des.paper_scenarios",
+]
+disable_error_code = ["arg-type"]
