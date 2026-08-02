@@ -37,9 +37,7 @@ def test_mm1_metrics_obey_littles_law() -> None:
         (2.0, 1.0),
     ],
 )
-def test_mm1_rejects_invalid_or_unstable_rates(
-    arrival_rate: float, service_rate: float
-) -> None:
+def test_mm1_rejects_invalid_or_unstable_rates(arrival_rate: float, service_rate: float) -> None:
     with pytest.raises(ValueError):
         mm1_metrics(arrival_rate, service_rate)
 
