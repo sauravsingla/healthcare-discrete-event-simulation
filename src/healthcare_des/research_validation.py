@@ -88,8 +88,8 @@ def equivalence_report(
         ((x.size - 1) * x.var(ddof=1) + (y.size - 1) * y.var(ddof=1)) / (x.size + y.size - 2)
     )
     effect = difference / pooled if pooled else 0.0
-    x_ci = confidence_interval(x, 1 - 2 * alpha)
-    y_ci = confidence_interval(y, 1 - 2 * alpha)
+    x_ci = confidence_interval(x.tolist(), 1 - 2 * alpha)
+    y_ci = confidence_interval(y.tolist(), 1 - 2 * alpha)
     ks = stats.ks_2samp(x, y)
     return {
         "observed_mean": float(x.mean()),
@@ -199,7 +199,7 @@ def calibrate_parameters(
 
     def objective(vector: np.ndarray) -> float:
         changes = {name: float(value) for name, value in zip(names, vector, strict=True)}
-        config = replace(base, seed=seed, **changes)
+        config = replace(base, seed=seed, **changes)  # type: ignore[arg-type]
         results = run_advanced_replications(config, replications)
         loss = 0.0
         for metric, target in observed_metrics.items():
@@ -212,6 +212,7 @@ def calibrate_parameters(
 
     solution = optimize.differential_evolution(objective, limits, seed=seed, polish=True)
     fitted = replace(
-        base, **{name: float(value) for name, value in zip(names, solution.x, strict=True)}
-    )
+        base,
+        **{name: float(value) for name, value in zip(names, solution.x, strict=True)},
+    )  # type: ignore[arg-type]
     return fitted, pd.DataFrame(history).sort_values("loss").reset_index(drop=True)
