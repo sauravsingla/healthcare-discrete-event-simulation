@@ -6,6 +6,17 @@ The format follows Keep a Changelog principles and the project uses semantic ver
 
 ## [Unreleased]
 
+### Added
+
+- Repository maturity and validation programme with measurable acceptance criteria.
+- Explicit programme for exact paper reproduction, external simulation validation, full core-module typing, immutable research releases and one-command reproduction.
+
+### Changed
+
+- Reorganised the research roadmap into completed, current, medium-term and long-term work.
+- Corrected `CITATION.cff` to match software version 1.2.0 and its release date.
+- Clarified that the NHS benchmark validates the aggregate forecasting and evidence pipeline rather than patient-level or clinical simulation behaviour.
+
 ## [1.2.0] - 2026-07-30
 
 ### Added

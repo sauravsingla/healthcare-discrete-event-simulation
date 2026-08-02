@@ -1,31 +1,62 @@
 # Research Roadmap
 
-This roadmap prioritises validated, reproducible improvements over feature count.
+This roadmap separates completed capabilities from evidence-dependent research milestones. The project prioritises validated, reproducible improvements over feature count.
 
-## Near term
+## Completed foundation
 
-- Publish benchmark outputs for baseline, extended-hours and staffing scenarios.
-- Add resource-utilisation measurements for MRI scanners and staff.
-- Add queue-length time series and waiting-time distributions.
-- Document calibration from NHS England aggregate diagnostics data.
-- Add end-to-end examples for simulation, optimisation and sensitivity analysis.
+- Base and advanced MRI discrete-event simulation engines.
+- Explicit patient lifecycle, queueing and outcome reconciliation.
+- Outpatient, inpatient and emergency pathways.
+- Hourly and calendar-aware demand profiles.
+- Dynamic staffing and operating windows.
+- Maintenance, stochastic machine failure, repair and optional scan restart.
+- Resource-utilisation and system-state observations.
+- Replications, bootstrap summaries, sensitivity analysis and capacity search.
+- Reproducible synthetic demand-capacity benchmark.
+- Official NHS aggregate-data acquisition, provenance and external forecasting benchmark.
+- Python package, command-line applications, dashboard, Docker image and multi-version CI.
+- Contributor, security, conduct, citation, changelog and data-governance documentation.
 
-## Medium term
+## Current priorities
 
-- Reproduce the eleven scenarios from the published study with an assumption-by-assumption comparison.
-- Add appointment-slot and shift-allocation optimisation.
-- Model equipment downtime, staff breaks and shift handovers.
-- Add cost and service-level objectives to capacity search.
-- Introduce CT and ultrasound pathways through reusable resource definitions.
+### Exact 2020-paper reproduction
+
+- Transcribe all authoritative scenario inputs and result targets.
+- Produce one versioned configuration per published scenario.
+- Compare published and reproduced outcomes with documented tolerances.
+- Resolve or explicitly record incomplete source assumptions.
+
+### External simulation validation
+
+- Calibrate service-time, waiting-time, throughput, utilisation and queue behaviour using approved evidence.
+- Separate calibration and holdout periods.
+- Publish observed-versus-simulated results with uncertainty and pre-agreed acceptance thresholds.
+
+### Engineering hardening
+
+- Remove module-wide MyPy suppressions from core simulation and research modules.
+- Add an exact dependency lock for published benchmark environments.
+- Provide one-command reproduction and checksum verification.
+- Publish tagged software releases with immutable benchmark evidence and an archival software citation.
+
+## Medium-term research
+
+- Appointment-template and shift-allocation optimisation.
+- Emergency-reserve and maintenance-window policies.
+- Cost, workforce and service-level objectives.
+- Formal parameter and structural uncertainty analysis.
+- CT and ultrasound pathways through reusable modality definitions.
 
 ## Longer-term research
 
 - Multi-site radiology networks and patient transfers.
-- Forecast-driven capacity planning with uncertainty intervals.
-- Simulated policy learning for appointment and staffing decisions.
+- Forecast-driven capacity planning with probabilistic intervals.
+- Policy learning for appointment, staffing and prioritisation decisions.
 - Calibrated healthcare digital-twin workflows using approved operational data.
-- External validation with healthcare operations researchers.
+- Independent external review with healthcare operations researchers.
 
 ## Acceptance criteria
 
-A roadmap item is considered complete only when it includes tests, documentation, explicit assumptions, reproducible configuration and clearly labelled results. Research findings must not be presented as operational recommendations without independent validation.
+A roadmap item is complete only when it includes tests, documentation, explicit assumptions, reproducible configuration, provenance, machine-readable outputs and clearly labelled interpretation. Research findings must not be presented as operational recommendations without independent validation, governance and accountable approval.
+
+See [`REPOSITORY_MATURITY.md`](REPOSITORY_MATURITY.md) for detailed deliverables and claim boundaries.

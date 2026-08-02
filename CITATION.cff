@@ -1,13 +1,13 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite both the software repository and the associated research paper."
+message: "If you use this software, please cite the software repository and the associated research paper."
 title: "Healthcare Discrete-Event Simulation"
 type: software
 authors:
   - family-names: Singla
     given-names: Saurav
     orcid: "https://orcid.org/0000-0002-6404-3988"
-version: 1.1.0
-date-released: 2026-07-29
+version: 1.2.0
+date-released: 2026-07-30
 repository-code: "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
 url: "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
 license: MIT
@@ -18,6 +18,8 @@ keywords:
   - patient flow
   - capacity planning
   - digital twin
+  - operations research
+  - reproducible research
 preferred-citation:
   type: article
   title: "Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation"
