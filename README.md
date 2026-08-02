@@ -6,25 +6,102 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.4236%2Fojmsi.2020.84007-blue)](https://doi.org/10.4236/ojmsi.2020.84007)
 [![Docker](https://img.shields.io/badge/Docker-verified-2496ED?logo=docker&logoColor=white)](#dashboard-and-docker)
+[![Research](https://img.shields.io/badge/research-reproducible-6f42c1)](#research-lineage-original-paper-and-new-work)
 
-A research-grade Python healthcare digital twin for MRI demand forecasting, patient-flow simulation, capacity planning, queue analysis, resource utilisation and transparent staffing optimisation.
+A research-grade Python healthcare digital twin for MRI demand forecasting, capacity planning, patient-flow simulation, queue analysis, resource utilisation, uncertainty analysis and transparent staffing optimisation.
 
-This repository implements and extends Saurav Singla (2020), **Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation**, *Open Journal of Modelling and Simulation*, 8, 88–107.
+This repository modernises and extends Saurav Singla (2020), **Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation**, *Open Journal of Modelling and Simulation*, 8, 88–107.
 
 - [Research paper](https://www.scirp.org/journal/paperinformation?paperid=102869)
 - [DOI](https://doi.org/10.4236/ojmsi.2020.84007)
 - [Validation protocol](docs/VALIDATION.md)
-- [Engine guide](docs/ENGINE_GUIDE.md)
 - [Validation status](docs/VALIDATION_STATUS.md)
+- [Engine guide](docs/ENGINE_GUIDE.md)
+- [NHS benchmark evidence](docs/benchmarks/nhs/2026-08-02/README.md)
 - [Roadmap](docs/ROADMAP.md)
 
 <p align="center">
   <img src="docs/assets/dashboard-preview.svg" alt="Healthcare demand and capacity dashboard preview" width="920">
 </p>
 
-## Key validated results
+## Headline results
 
-The repository has been benchmarked against official public NHS MRI activity data.
+| Evidence | Result |
+|---|---:|
+| Official NHS providers represented | 463 |
+| Provider-month MRI observations | 4,979 |
+| National holdout actual MRI activity | 840,480 |
+| National holdout predicted MRI activity | 821,577 |
+| **National holdout WAPE** | **2.2491%** |
+| Provider-level median WAPE | 13.0128% |
+| Synthetic demand-capacity scenarios | 18 |
+| Measured simulation runs | 36 |
+| Supported Python versions | 3.10, 3.11 and 3.12 |
+| Test coverage requirement | Minimum 80% |
+
+**Plain-language interpretation:** on the unseen national holdout period, the benchmark differed from actual MRI activity by about **2 activities for every 100 delivered**. This is a strong aggregate forecasting result for short-term planning, while local provider performance remains more variable and should be recalibrated with local data.
+
+## Research lineage: original paper and new work
+
+### What the 2020 paper established
+
+The original study used discrete-event simulation to examine healthcare demand and capacity for MRI services. It modelled the movement of patients through a constrained diagnostic pathway and showed how simulation can be used to study operational questions that are difficult to test safely in live services.
+
+The paper's core contribution was the application of discrete-event simulation to:
+
+- represent patient arrivals and service progression over time;
+- model queues and waiting caused by constrained MRI capacity;
+- compare demand with available service resources;
+- evaluate alternative capacity scenarios before real-world implementation;
+- support evidence-based operational planning through simulation rather than trial-and-error in a live hospital environment.
+
+That work established the research foundation: **healthcare demand and capacity can be studied as a time-dependent system of arrivals, queues, resources and service events.**
+
+### What this repository adds now
+
+This repository turns that research idea into a modern, reusable and auditable healthcare simulation platform. The new work goes beyond the original paper implementation by adding:
+
+- a production-style Python package with tested command-line interfaces;
+- an advanced patient lifecycle covering cancellation, no-show, abandonment and unfinished patients;
+- outpatient, inpatient and 24-hour emergency pathways sharing constrained resources;
+- hourly and calendar-aware demand profiles;
+- dynamic staffing and operating windows;
+- planned maintenance, stochastic MRI failure, repair and optional scan restart;
+- deterministic replications, bootstrap uncertainty and sensitivity analysis;
+- capacity search and transparent optimisation utilities;
+- patient-level simulation ledgers and system-state observations;
+- a Streamlit dashboard and Docker deployment;
+- multi-version continuous integration, package validation and an 80% coverage gate;
+- an external benchmark pipeline using official NHS aggregate data;
+- versioned benchmark evidence, source provenance and machine-readable outputs.
+
+In simple terms, the **paper demonstrated the method**, while this repository develops it into a **validated, reproducible and extensible digital-twin framework**.
+
+## Why this project matters
+
+Healthcare capacity decisions involve uncertain demand, patient priorities, shared resources, staff availability, equipment downtime and queues that interact over time. These relationships cannot be understood reliably from simple averages alone.
+
+This project provides a safe environment for comparing demand, machine, staffing and scheduling scenarios before operational changes are made. Assumptions, simulation logic, evidence and validation status are kept separate so that results can be reviewed, challenged and reproduced.
+
+## What the platform models
+
+| Area | Capability |
+|---|---|
+| Demand | Outpatient, inpatient and 24-hour emergency arrivals |
+| Patient flow | Reception, preparation, MRI scanning and reporting |
+| Operational behaviour | Priorities, queues, cancellation, no-show, abandonment and unfinished patients |
+| Capacity | MRI machines, radiographers, radiologists, clerks and dynamic staffing windows |
+| Reliability | Maintenance, stochastic failure, repair and optional scan restart |
+| Experimentation | Replications, bootstrap summaries, sensitivity analysis and scenario benchmarking |
+| Public evidence | NHS aggregate-data preparation, provenance and benchmark workflows |
+| Delivery | Python package, four CLI entry points, Streamlit dashboard and Docker image |
+| Quality | Linting, typing, coverage gate, wheel validation, Docker checks and multi-version CI |
+
+## Official NHS external benchmark
+
+The repository includes an end-to-end external benchmark using official public NHS aggregate data. The pipeline performs source acquisition, checksums, schema discovery, provider-month MRI extraction, leakage-free temporal holdout, baseline comparison, provider-level scoring, optional scanner-capacity matching and machine-readable report generation.
+
+### Published results
 
 | External benchmark measure | Published result |
 |---|---:|
@@ -43,123 +120,44 @@ The repository has been benchmarked against official public NHS MRI activity dat
 
 ### Easy interpretation
 
-The benchmark asked a simple question: **how closely can the next period's MRI activity be estimated from recent NHS activity?**
+The benchmark asks a practical question: **how closely can near-term MRI demand be estimated from recent observed activity?**
 
-The selected model predicted **821,577 MRI activities** against **840,480 actually delivered** during the unseen holdout period. The absolute difference was **18,903 activities**, giving a national WAPE of **2.2491%**.
+The previous month's activity (`lag_1`) marginally outperformed the trailing three-month average during validation. On the unseen national holdout period, the estimate was 821,577 MRI activities compared with 840,480 actually recorded.
 
-In practical terms, this is an aggregate forecast difference of roughly **2 activities for every 100 actually delivered**.
+This means:
 
-The result supports five conclusions:
+- the national aggregate forecast followed overall MRI demand closely;
+- recent activity was the strongest short-term signal among the tested transparent baselines;
+- the result is useful as a planning reference for large systems and networks;
+- it is not an exact forecast for every provider, day or patient pathway;
+- provider-level error is naturally more volatile, especially for low-volume organisations.
 
-- **Strong national-level accuracy:** overall MRI activity was tracked closely during the unseen holdout period.
-- **Recent activity was the best short-term signal:** the previous month (`lag_1`) slightly outperformed the trailing three-month average.
-- **Useful for aggregate planning:** the result supports short-term demand and capacity planning at national or large-network level.
-- **Provider-level performance varies:** median provider WAPE was 13.0128%; 68.5% of scored providers were at or below 20%, and 90.0% were at or below 50%.
-- **External evidence improves credibility:** the benchmark used official NHS data across 463 providers rather than relying only on synthetic simulation inputs.
-
-This benchmark is an external observational evaluation of the forecasting and evidence pipeline. It is **not** patient-level or clinical validation, and it should not be interpreted as an exact forecast for every provider, day or patient pathway.
-
-Full evidence and provenance are retained in [`docs/benchmarks/nhs/2026-08-02/`](docs/benchmarks/nhs/2026-08-02/README.md).
-
-## Why this project matters
-
-Healthcare capacity decisions involve uncertain demand, patient priorities, shared resources, equipment downtime and queues that interact over time. This project converts those operational relationships into a reproducible discrete-event simulation so that alternative demand, machine, staffing and scheduling scenarios can be compared before real-world implementation.
-
-The repository is designed as both a research implementation and an auditable decision-support framework. Assumptions, simulation logic, generated evidence and validation status are separated so that results can be reproduced, challenged and extended.
-
-## What the repository provides
-
-| Area | Capability |
-|---|---|
-| Demand | Outpatient, inpatient and 24-hour emergency arrivals |
-| Patient flow | Reception, preparation, MRI scanning and reporting |
-| Operational behaviour | Priorities, queues, cancellation, no-show, abandonment and unfinished patients |
-| Capacity | MRI machines, radiographers, radiologists, clerks and dynamic staffing windows |
-| Reliability | Maintenance, stochastic failure, repair and optional scan restart |
-| Experimentation | Replications, bootstrap summaries, sensitivity analysis and scenario benchmarking |
-| External evidence | NHS aggregate-data preparation, provenance and benchmark workflows |
-| Delivery | Python package, four CLI entry points, Streamlit dashboard and Docker image |
-| Quality | Linting, typing, coverage gate, wheel validation, Docker health checks and multi-version CI |
-
-## Quick start
-
-```bash
-git clone https://github.com/sauravsingla/healthcare-discrete-event-simulation.git
-cd healthcare-discrete-event-simulation
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -e ".[dev,dashboard]"
-healthcare-des --config configs/baseline.yaml --replications 20
-```
-
-Launch the dashboard:
-
-```bash
-streamlit run app.py
-```
-
-## Research contributions
-
-Relative to a basic patient-flow simulation, this repository adds:
-
-- outpatient, inpatient and emergency pathways sharing constrained MRI capacity;
-- cancellation, no-show, abandonment and unfinished-patient accounting;
-- calendar-aware and hourly demand profiles;
-- dynamic staffing and operating windows;
-- planned maintenance, stochastic MRI failure, repair and optional scan restart;
-- configurable horizon, bounded-drain and full-drain termination policies;
-- deterministic replications, bootstrap uncertainty and sensitivity analysis;
-- capacity-search and transparent optimisation utilities;
-- run-level patient ledgers and system-state observations;
-- reproducible performance benchmarking across demand and capacity levels;
-- official NHS aggregate-data preparation, provenance and external benchmarking;
-- package, CLI, dashboard, Docker and continuous-integration delivery.
-
-## Official NHS multi-source benchmark
-
-The external-data workflow uses official public NHS sources for different evidence roles.
-
-| Evidence family | Official input covered | Benchmark role |
-|---|---|---|
-| DM01 diagnostics | Monthly diagnostics activity extracts | Provider-month MRI activity and demand series |
-| DID diagnostics | Modality/provider counts and pathway turnaround releases | Independent activity and turnaround evidence |
-| NIDC assets | Imaging asset release | Provider-level MRI scanner capacity |
-| NHS workforce | Workforce release | Workforce context for provider benchmarking |
-
-The pipeline performs:
-
-- source provenance and checksums;
-- workbook and CSV schema discovery;
-- provider-month MRI extraction;
-- leakage-free temporal holdout;
-- `lag_1` and trailing-mean baseline comparison;
-- validation-WAPE model selection;
-- provider-level scoring;
-- optional scanner-capacity matching;
-- machine-readable report generation.
+Provider-level WAPE was available for 289 providers with positive holdout activity. The median was 13.0128%; 68.5% were at or below 20% WAPE and 90.0% were at or below 50% WAPE.
 
 The retained evidence records workflow run `30742975228`, source commit `b036068`, artifact ID `8831932312`, and artifact SHA-256 `4a91bc13ae9a038718f5591290189cd39dc9a97427078c123a311bf963a705fe`.
 
+Full evidence and machine-readable metadata are available in [`docs/benchmarks/nhs/2026-08-02/`](docs/benchmarks/nhs/2026-08-02/README.md).
+
+> This is external observational validation of the forecasting and evidence pipeline. It is not patient-level or clinical validation of the discrete-event simulation.
+
 ## Reproducible simulation benchmark
 
-The advanced engine is also tested across **18 demand-capacity scenarios** and **36 measured runs**.
+The advanced engine is also tested across three synthetic workload levels and six MRI-capacity configurations.
 
 | Workload | Daily demand | MRI capacities | Scenario combinations | Measured runs |
 |---|---:|---|---:|---:|
 | Low demand | 35 patients/day | 1, 2, 4, 8, 12 and 20 | 6 | 12 |
 | Baseline demand | 70 patients/day | 1, 2, 4, 8, 12 and 20 | 6 | 12 |
 | Stress demand | 140 patients/day | 1, 2, 4, 8, 12 and 20 | 6 | 12 |
-| **Total** | **3 demand levels** | **6 capacities per level** | **18** | **36** |
+| **Total** | **3 workloads** | **6 capacities each** | **18** | **36** |
 
-All scenarios completed successfully and preserve the lifecycle identity:
+All scenarios completed successfully and preserve the accounting identity:
 
 ```text
 arrivals = completed + abandoned + unfinished
 ```
 
-The benchmark records runtime, patient-ledger volume and state-observation volume for every run. Fixed seeds with deterministic replication offsets make the comparisons repeatable.
-
-> These workload datasets are synthetic simulation scenarios. They are separate from the official NHS external benchmark described above.
+The benchmark confirms deterministic execution, lifecycle reconciliation and operational stability across constrained, intermediate and deliberately over-provisioned configurations. These are synthetic engineering tests, not independent clinical datasets.
 
 ## System architecture
 
@@ -188,7 +186,7 @@ flowchart LR
         N[Radiologists]
     end
 
-    subgraph Outputs[Evidence and decision layer]
+    subgraph Evidence[Evidence and decision layer]
         O[Patient outcome ledger]
         P[State observations]
         Q[KPI and uncertainty summaries]
@@ -240,42 +238,55 @@ flowchart LR
 
 `wait_minutes` is the sum of stage queue waits. `system_minutes` includes waiting and service time. Cancellation and no-show are recorded separately from patients who enter the physical service system.
 
-## Example outputs
-
-A typical experiment produces:
-
-- mean and stage-specific waiting time;
-- mean system time;
-- throughput per day;
-- completion rate and service-level attainment;
-- patient-type performance;
-- clerk, radiographer, MRI and radiologist utilisation;
-- cancellation, no-show, abandonment and unfinished-patient counts;
-- replication-level uncertainty and 95% confidence intervals;
-- ranked capacity and staffing alternatives.
-
-Generate deterministic examples with:
+## Quick start
 
 ```bash
-python examples/generate_example_outputs.py
+git clone https://github.com/sauravsingla/healthcare-discrete-event-simulation.git
+cd healthcare-discrete-event-simulation
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -e ".[dev,dashboard]"
+healthcare-des --config configs/baseline.yaml --replications 20
 ```
 
-Outputs:
+Launch the dashboard:
 
-```text
-outputs/example_replications.csv
-outputs/example_summary.csv
-outputs/example_capacity_candidates.csv
+```bash
+streamlit run app.py
 ```
 
-## Which engine should I use?
+## Command-line applications
 
-| Engine | Intended use | Status |
-|---|---|---|
-| Base engine | Original YAML-driven workflow, standard scenario comparison and dashboard | Maintained for compatibility |
-| Advanced engine | Rich lifecycle accounting, hourly demand, dynamic staffing, downtime, appointment schedules and configurable draining | Recommended for new research |
+```bash
+healthcare-des --help
+healthcare-des-benchmark --help
+healthcare-des-reproduce --help
+healthcare-des-advanced-benchmark --help
+```
 
-See [docs/ENGINE_GUIDE.md](docs/ENGINE_GUIDE.md) for detailed distinctions and migration guidance.
+Run a scenario:
+
+```bash
+healthcare-des --config configs/baseline.yaml --replications 20
+```
+
+Run a multi-scenario benchmark:
+
+```bash
+healthcare-des-benchmark \
+  --config configs/baseline.yaml \
+  --replications 20 \
+  --output outputs/benchmark.csv
+```
+
+Run the advanced benchmark:
+
+```bash
+healthcare-des-advanced-benchmark \
+  --days 7 \
+  --replications 3 \
+  --output outputs/advanced_benchmark.csv
+```
 
 ## Advanced engine example
 
@@ -301,48 +312,21 @@ print(patients["status"].value_counts())
 assert result.arrivals == result.completed + result.abandoned + result.unfinished
 ```
 
-A complete example is available in [`examples/advanced_workflow.py`](examples/advanced_workflow.py).
+See [`examples/advanced_workflow.py`](examples/advanced_workflow.py) for a complete example.
 
-## Termination policies
+## Decision outputs
 
-- `horizon`: stop at the measurement horizon and report unfinished patients.
-- `bounded_drain`: stop arrivals and allow up to `max_drain_minutes` for completion.
-- `drain`: stop arrivals and continue while active patients remain.
+A typical experiment produces:
 
-Use the same policy across scenarios unless termination is itself the experimental factor.
-
-## Command-line applications
-
-```bash
-healthcare-des --help
-healthcare-des-benchmark --help
-healthcare-des-reproduce --help
-healthcare-des-advanced-benchmark --help
-```
-
-Standard scenario run:
-
-```bash
-healthcare-des --config configs/baseline.yaml --replications 20
-```
-
-Multi-scenario benchmark:
-
-```bash
-healthcare-des-benchmark \
-  --config configs/baseline.yaml \
-  --replications 20 \
-  --output outputs/benchmark.csv
-```
-
-Advanced benchmark:
-
-```bash
-healthcare-des-advanced-benchmark \
-  --days 7 \
-  --replications 3 \
-  --output outputs/advanced_benchmark.csv
-```
+- stage-specific and total waiting time;
+- mean system time;
+- throughput and completion rate;
+- service-level attainment;
+- patient-type performance;
+- resource utilisation;
+- cancellation, no-show, abandonment and unfinished counts;
+- replication uncertainty and 95% confidence intervals;
+- ranked capacity and staffing alternatives.
 
 ## Capacity optimisation
 
@@ -383,7 +367,7 @@ docker run --rm -p 8501:8501 healthcare-des
 
 The dashboard exposes scenario controls, KPI cards, confidence intervals, replication uncertainty, resource utilisation, patient-type performance, scenario comparison and capacity search.
 
-## Verification and validation
+## Verification and validation status
 
 | Area | Current status |
 |---|---|
@@ -392,27 +376,23 @@ The dashboard exposes scenario controls, KPI cards, confidence intervals, replic
 | Package and CLI verification | Wheel build, clean installation and CLI smoke tests implemented |
 | Dashboard deployment verification | Docker build and Streamlit health endpoint tested in CI |
 | Repeated-experiment reproducibility | Fixed-seed and replication checks implemented |
-| Public aggregate-data benchmark | Official NHS benchmark executed and results retained |
+| External aggregate-data benchmark | Official NHS benchmark completed and versioned |
+| Provider-level observational evaluation | Completed with documented variability |
+| Exact 2020-paper reproduction | Not claimed while authoritative scenario targets remain incomplete |
 | Clinical deployment validation | Required locally before operational use |
 
-The public-data workflow uses aggregate external data and stores no patient-level confidential or employer-owned information.
+## Testing and quality
 
-See [`docs/VALIDATION.md`](docs/VALIDATION.md), [`docs/VALIDATION_STATUS.md`](docs/VALIDATION_STATUS.md) and [`docs/VALIDATION_FRAMEWORK.md`](docs/VALIDATION_FRAMEWORK.md).
+```bash
+pre-commit run --all-files
+ruff check src tests scripts examples
+mypy src/healthcare_des
+pytest --cov=healthcare_des --cov-report=term-missing --cov-fail-under=80
+python -m build
+twine check dist/*
+```
 
-## KPI definitions
-
-- **Booked:** outpatient appointments created before cancellation and no-show resolution.
-- **Cancelled:** appointments cancelled before scheduled arrival.
-- **Expected arrivals:** booked appointments remaining after advance cancellation.
-- **No-shows:** expected outpatients who do not enter the service system.
-- **Arrivals:** patients who enter the simulated service system.
-- **Completed:** arrivals finishing all stages.
-- **Abandoned:** arrivals leaving before completion after exhausting patience.
-- **Unfinished:** arrivals still active when the selected termination policy ends.
-- **Completion rate:** completed divided by actual arrivals.
-- **Stage waits:** queue delay before reception, preparation, MRI and reporting.
-- **Total wait:** sum of stage-specific queue waits.
-- **System time:** elapsed time from actual arrival to final outcome.
+CI exercises Python 3.10, 3.11 and 3.12, installed CLI entry points, advanced-engine accounting, bounded benchmark execution, wheel installation, Docker build and the Streamlit health endpoint.
 
 ## Repository structure
 
@@ -431,28 +411,13 @@ See [`docs/VALIDATION.md`](docs/VALIDATION.md), [`docs/VALIDATION_STATUS.md`](do
 └── Dockerfile               # Reproducible container deployment
 ```
 
-## Testing and quality
-
-```bash
-pre-commit run --all-files
-ruff check src tests scripts examples
-mypy src/healthcare_des
-pytest --cov=healthcare_des --cov-report=term-missing --cov-fail-under=80
-python -m build
-twine check dist/*
-```
-
-CI runs quality checks on Python 3.10, 3.11 and 3.12. It validates CLI entry points, advanced-engine accounting, benchmark outputs, package metadata, wheel installation and Docker health.
-
 ## Assumptions and limitations
 
-The project focuses on MRI patient flow rather than the entire radiology service. Default simulation values remain illustrative until calibrated against authoritative local operational evidence.
+The project focuses on MRI patient flow rather than the entire radiology service. Default simulation assumptions remain illustrative until calibrated against authoritative local evidence.
 
-The NHS benchmark evaluates aggregate forecasting and data-processing performance. It does not establish patient-level accuracy, clinical effectiveness, causal impact or safe production deployment.
+The external NHS benchmark evaluates aggregate forecasting and data-processing capability. It does not demonstrate patient-level accuracy, causal impact, clinical safety or readiness for production scheduling.
 
-Real-world use requires independent validation of clinical pathways, workforce rules, costs, safety constraints, local capacity and governance requirements.
-
-The model is a research and decision-support framework. It is not a clinical recommendation or a production scheduling system.
+Real-world use requires independent validation of local clinical pathways, workforce rules, costs, service targets, safety constraints and governance requirements.
 
 ## Citation
 
