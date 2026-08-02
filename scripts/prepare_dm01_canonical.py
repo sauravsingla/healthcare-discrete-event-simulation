@@ -1,0 +1,172 @@
+"""Create canonical provider-month MRI activity CSVs from downloaded DM01 extracts."""
+
+from __future__ import annotations
+
+import argparse
+import re
+from pathlib import Path
+
+import pandas as pd
+
+
+def _key(value: object) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(value).lower())
+
+
+def _find_column(frame: pd.DataFrame, candidates: tuple[str, ...]) -> object | None:
+    by_key = {_key(column): column for column in frame.columns}
+    for candidate in candidates:
+        if candidate in by_key:
+            return by_key[candidate]
+    for key, column in by_key.items():
+        if any(candidate in key for candidate in candidates):
+            return column
+    return None
+
+
+def _period_from_filename(path: Path) -> str | None:
+    text = path.stem.lower()
+    months = {
+        "january": 1,
+        "february": 2,
+        "march": 3,
+        "april": 4,
+        "may": 5,
+        "june": 6,
+        "july": 7,
+        "august": 8,
+        "september": 9,
+        "october": 10,
+        "november": 11,
+        "december": 12,
+    }
+    year_match = re.search(r"20\d{2}", text)
+    if year_match is None:
+        return None
+    for name, month in months.items():
+        if name in text:
+            return f"{year_match.group(0)}-{month:02d}"
+    return None
+
+
+def _normalise_period(series: pd.Series, path: Path) -> pd.Series:
+    text = series.astype(str).str.strip()
+    parsed = pd.to_datetime(text, errors="coerce")
+    unresolved = parsed.isna() & text.str.fullmatch(r"\d{6}")
+    if unresolved.any():
+        parsed.loc[unresolved] = pd.to_datetime(
+            text.loc[unresolved], format="%Y%m", errors="coerce"
+        )
+    result = parsed.dt.to_period("M").astype(str)
+    fallback = _period_from_filename(path)
+    if fallback is not None:
+        result = result.where(result.ne("NaT"), fallback)
+    return result
+
+
+def _read_csv(path: Path) -> pd.DataFrame | None:
+    try:
+        return pd.read_csv(path, low_memory=False)
+    except (UnicodeDecodeError, pd.errors.ParserError, pd.errors.EmptyDataError):
+        return None
+
+
+def _numeric(series: pd.Series) -> pd.Series:
+    cleaned = series.astype(str).str.replace(",", "", regex=False).str.strip()
+    return pd.to_numeric(cleaned, errors="coerce")
+
+
+def prepare_file(path: Path, output_dir: Path) -> Path | None:
+    frame = _read_csv(path)
+    if frame is None or frame.empty:
+        return None
+
+    provider = _find_column(
+        frame,
+        ("providerorgcode", "providercode", "organisationcode", "orgcode"),
+    )
+    period = _find_column(frame, ("period", "month", "reportingperiod"))
+    activity = _find_column(
+        frame,
+        ("totalactivity", "activity", "count", "tests", "value"),
+    )
+    if provider is None or activity is None:
+        return None
+
+    text_frame = frame.astype(str)
+    mask = text_frame.apply(
+        lambda column: column.str.contains(
+            r"\b(?:MRI|Magnetic Resonance(?: Imaging)?)\b",
+            case=False,
+            regex=True,
+            na=False,
+        )
+    ).any(axis=1)
+    if not mask.any():
+        return None
+
+    if period is None:
+        fallback = _period_from_filename(path)
+        if fallback is None:
+            return None
+        periods = pd.Series(fallback, index=frame.index[mask])
+    else:
+        periods = _normalise_period(frame.loc[mask, period], path)
+
+    result = pd.DataFrame(
+        {
+            "provider_code": frame.loc[mask, provider],
+            "period": periods,
+            "modality": "MRI",
+            "activity": _numeric(frame.loc[mask, activity]),
+        }
+    )
+    result["provider_code"] = result["provider_code"].astype(str).str.strip().str.upper()
+    result = result.dropna(subset=["activity"])
+    result = result[
+        result["provider_code"].ne("")
+        & result["provider_code"].ne("NAN")
+        & result["period"].ne("NaT")
+    ]
+    result = result.groupby(["provider_code", "period", "modality"], as_index=False)[
+        "activity"
+    ].sum()
+    if result.empty:
+        return None
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    target = output_dir / f"{path.stem}_canonical.csv"
+    result.to_csv(target, index=False)
+    return target
+
+
+def run(root: Path, output_dir: Path) -> int:
+    written = [
+        target
+        for path in sorted(root.rglob("*.csv"))
+        if output_dir not in path.parents
+        if (target := prepare_file(path, output_dir)) is not None
+    ]
+    if len(written) < 6:
+        raise ValueError(
+            f"Only {len(written)} canonical DM01 monthly files were created; "
+            "at least 6 are required"
+        )
+    print(f"Created {len(written)} canonical DM01 MRI files in {output_dir}")
+    return len(written)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Prepare canonical DM01 MRI activity files")
+    parser.add_argument("root", type=Path)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("data/raw/nhs_public/canonical_dm01"),
+    )
+    args = parser.parse_args()
+    run(args.root, args.output_dir)
+
+
+if __name__ == "__main__":
+    main()
