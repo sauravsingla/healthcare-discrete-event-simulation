@@ -94,14 +94,3 @@ warn_unused_ignores = true
 no_implicit_optional = true
 check_untyped_defs = true
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = [
-  "healthcare_des.advanced_engine",
-  "healthcare_des.config",
-  "healthcare_des.paper_scenarios",
-  "healthcare_des.reproduction",
-  "healthcare_des.reporting",
-  "healthcare_des.research_validation",
-]
-ignore_errors = true
