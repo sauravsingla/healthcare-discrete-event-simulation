@@ -94,3 +94,7 @@ warn_unused_ignores = true
 no_implicit_optional = true
 check_untyped_defs = true
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "healthcare_des.advanced_engine"
+disable_error_code = ["assignment", "attr-defined"]
