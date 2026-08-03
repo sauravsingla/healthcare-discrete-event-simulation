@@ -47,7 +47,7 @@ ACTIVITY_ALIASES = (
     "total",
     "value",
 )
-MRI_PATTERN = re.compile(r"\b(mri|magnetic resonance(?: imaging)?)\b", re.IGNORECASE)
+MRI_PATTERN = re.compile(r"\b(?:mri|magnetic resonance(?: imaging)?)\b", re.IGNORECASE)
 MONTH_PATTERN = re.compile(
     r"\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
     r"jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|"
