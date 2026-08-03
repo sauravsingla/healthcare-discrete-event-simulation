@@ -1,12 +1,13 @@
-"""Public advanced DES surface with priority dispatch and audit-safe lifecycle semantics."""
+"""Public advanced DES implementation with auditable lifecycle semantics."""
 
 from __future__ import annotations
 
 import heapq
-from dataclasses import dataclass
-from typing import Literal
+from dataclasses import asdict, dataclass
+from typing import Any, Literal
 
 import numpy as np
+import pandas as pd
 import simpy
 
 from . import advanced_engine as _engine
@@ -32,7 +33,7 @@ class AdvancedScenarioConfig(_engine.AdvancedScenarioConfig):
 class MRIMachine(_engine.MRIMachine):
     """MRI machine with interrupt-safe scans and unique downtime accounting."""
 
-    def __init__(self, env, machine_id, config, rng):
+    def __init__(self, env, machine_id, config: AdvancedScenarioConfig, rng):
         self._unavailable_since: float | None = None
         super().__init__(env, machine_id, config, rng)
 
@@ -61,7 +62,8 @@ class MRIMachine(_engine.MRIMachine):
                 yield request
                 self._add_blocker("maintenance")
                 self.state = "MAINTENANCE"
-                if self.config.maintenance_policy == "fixed_calendar_window":
+                policy = getattr(self.config, "maintenance_policy", "fixed_duration_after_release")
+                if policy == "fixed_calendar_window":
                     duration = float(max(0, window.end - int(self.env.now % 1440)))
                 else:
                     duration = float(window.end - window.start)
@@ -122,9 +124,21 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
     """Advanced model with one system-wide priority MRI dispatch queue."""
 
     def __init__(self, env, config, rng):
+        self.env = env
+        self.config = config
+        self.rng = rng
+        self.clerks = _engine.DynamicCapacity(env, 1, config.clerk_capacity)
+        self.radiographers = _engine.DynamicCapacity(env, 1, config.radiographer_capacity)
+        self.radiologists = _engine.DynamicCapacity(env, 1, config.radiologist_capacity)
+        self.machines = [
+            MRIMachine(env, index, config, rng) for index in range(config.mri_machines)
+        ]
+        self.ledger: dict[int, dict[str, Any]] = {}
+        self.state: list[dict[str, float | str | bool]] = []
+        self.active_patients = 0
         self._mri_waiters: list[tuple[int, int, str, simpy.Event]] = []
         self._mri_sequence = 0
-        super().__init__(env, config, rng)
+        env.process(self._track_state())
         env.process(self._dispatch_mri())
 
     def _track_state(self):
@@ -200,7 +214,8 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
         event = self.env.event()
         self._mri_sequence += 1
         heapq.heappush(self._mri_waiters, (priority, self._mri_sequence, patient_type, event))
-        timeout = self.env.timeout(max(0.0, deadline - float(self.env.now)))
+        dispatch_grace = 0.100001
+        timeout = self.env.timeout(max(0.0, deadline - float(self.env.now)) + dispatch_grace)
         outcome = yield event | timeout
         if event in outcome:
             return event.value
@@ -300,17 +315,150 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
             self.active_patients -= 1
 
 
-_engine.AdvancedScenarioConfig = AdvancedScenarioConfig  # type: ignore[misc]
-_engine.MRIMachine = MRIMachine  # type: ignore[misc]
-_engine.AdvancedMRIModel = AdvancedMRIModel  # type: ignore[misc]
-
 AdvancedSimulationResult = _engine.AdvancedSimulationResult
 CapacityWindow = _engine.CapacityWindow
 DynamicCapacity = _engine.DynamicCapacity
 MachineWindow = _engine.MachineWindow
-run_advanced_once = _engine.run_advanced_once
-run_advanced_replications = _engine.run_advanced_replications
-summarise_advanced = _engine.summarise_advanced
+
+
+def _run_to_termination(
+    env: simpy.Environment, model: AdvancedMRIModel, config: AdvancedScenarioConfig, horizon: float
+) -> None:
+    env.run(until=horizon)
+    if config.termination_policy == "horizon":
+        return
+    drain_limit = (
+        float("inf") if config.termination_policy == "drain" else horizon + config.max_drain_minutes
+    )
+    while model.active_patients > 0 and env.now < drain_limit:
+        env.run(until=min(env.now + 1, drain_limit))
+
+
+def _bootstrap_interval(
+    values: pd.Series, rng: np.random.Generator, samples: int
+) -> tuple[float, float]:
+    array = values.to_numpy(dtype=float)
+    if len(array) <= 1 or samples <= 0:
+        mean = float(array.mean()) if len(array) else 0.0
+        return mean, mean
+    means = np.asarray(
+        [rng.choice(array, size=len(array), replace=True).mean() for _ in range(samples)]
+    )
+    return float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975))
+
+
+def run_advanced_once(
+    config: AdvancedScenarioConfig, replication: int = 0
+) -> tuple[AdvancedSimulationResult, pd.DataFrame, pd.DataFrame]:
+    config.validate()
+    env = simpy.Environment()
+    rng = np.random.default_rng(config.seed + replication)
+    model = AdvancedMRIModel(env, config, rng)
+    env.process(model.source())
+    horizon = (config.warmup_days + config.days) * 1440
+    _run_to_termination(env, model, config, horizon)
+    measurement_start = config.warmup_days * 1440
+
+    frame = pd.DataFrame(model.ledger.values())
+    if frame.empty:
+        frame = pd.DataFrame(
+            columns=["patient_id", "patient_type", "status", "booked_time", "entered_system"]
+        )
+    frame = frame.loc[
+        (frame["booked_time"].astype(float) >= measurement_start)
+        & (frame["booked_time"].astype(float) < horizon)
+    ].copy()
+    terminal = {"completed", "cancelled", "no_show", "abandoned"}
+    frame.loc[~frame["status"].isin(terminal), "status"] = "unfinished"
+
+    state = pd.DataFrame(model.state)
+    state = state.loc[(state["time"] >= measurement_start) & (state["time"] < env.now)].copy()
+    completed_frame = frame.loc[frame["status"] == "completed"]
+    open_state = state.loc[state["is_open"].astype(bool)]
+
+    counts = frame["status"].value_counts()
+    booked = int((frame["patient_type"] == "outpatient").sum())
+    cancelled = int(counts.get("cancelled", 0))
+    expected_arrivals = len(frame) - cancelled
+    no_shows = int(counts.get("no_show", 0))
+    arrivals = int(frame["entered_system"].fillna(False).astype(bool).sum())
+    completed = int(counts.get("completed", 0))
+    abandoned = int(counts.get("abandoned", 0))
+    unfinished = int(counts.get("unfinished", 0))
+
+    def mean_column(name: str) -> float:
+        return (
+            float(completed_frame[name].fillna(0).mean())
+            if not completed_frame.empty and name in completed_frame
+            else 0.0
+        )
+
+    mean_queue_open = float(open_state["mri_queue"].mean()) if not open_state.empty else 0.0
+    mean_queue_24h = float(state["mri_queue"].mean()) if not state.empty else 0.0
+    mean_available_open = float(open_state["mri_available"].mean()) if not open_state.empty else 0.0
+    mean_available_24h = float(state["mri_available"].mean()) if not state.empty else 0.0
+    result = AdvancedSimulationResult(
+        scenario=config.name,
+        replication=replication,
+        booked=booked,
+        cancelled=cancelled,
+        expected_arrivals=int(expected_arrivals),
+        no_shows=no_shows,
+        arrivals=arrivals,
+        completed=completed,
+        abandoned=abandoned,
+        unfinished=unfinished,
+        completion_rate_pct=100.0 * completed / arrivals if arrivals else 0.0,
+        mean_wait_minutes=mean_column("wait_minutes"),
+        mean_reception_wait_minutes=mean_column("reception_wait_minutes"),
+        mean_preparation_wait_minutes=mean_column("preparation_wait_minutes"),
+        mean_mri_wait_minutes=mean_column("mri_wait_minutes"),
+        mean_reporting_wait_minutes=mean_column("reporting_wait_minutes"),
+        mean_system_minutes=mean_column("system_minutes"),
+        p90_system_minutes=float(completed_frame["system_minutes"].quantile(0.9))
+        if not completed_frame.empty
+        else 0.0,
+        throughput_per_day=completed / config.days,
+        mean_queue_length=mean_queue_open,
+        mean_queue_length_open=mean_queue_open,
+        mean_queue_length_24h=mean_queue_24h,
+        max_queue_length=int(state["mri_queue"].max()) if not state.empty else 0,
+        mri_failures=sum(machine.failures for machine in model.machines),
+        mri_downtime_minutes=sum(machine.downtime for machine in model.machines),
+        mean_available_mri=mean_available_open,
+        mean_available_mri_open=mean_available_open,
+        mean_available_mri_24h=mean_available_24h,
+    )
+    return result, frame.reset_index(drop=True), state.reset_index(drop=True)
+
+
+def run_advanced_replications(
+    config: AdvancedScenarioConfig, replications: int = 20
+) -> pd.DataFrame:
+    if replications <= 0:
+        raise ValueError("replications must be positive")
+    return pd.DataFrame(
+        asdict(run_advanced_once(config, index)[0]) for index in range(replications)
+    )
+
+
+def summarise_advanced(
+    results: pd.DataFrame, bootstrap_samples: int = 2000, seed: int = 17
+) -> dict[str, float]:
+    """Summarise replications with bootstrap percentile confidence intervals."""
+    if results.empty:
+        raise ValueError("results must not be empty")
+    rng = np.random.default_rng(seed)
+    summary: dict[str, float] = {}
+    for column in results.select_dtypes(include=[np.number]).columns:
+        values = results[column].astype(float)
+        low, high = _bootstrap_interval(values, rng, bootstrap_samples)
+        summary[column] = float(values.mean())
+        summary[f"{column}_sd"] = float(values.std(ddof=1)) if len(values) > 1 else 0.0
+        summary[f"{column}_ci95_low"] = low
+        summary[f"{column}_ci95_high"] = high
+    return summary
+
 
 __all__ = [
     "AdvancedMRIModel",
