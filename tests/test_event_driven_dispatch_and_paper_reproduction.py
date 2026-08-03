@@ -111,8 +111,9 @@ def test_published_targets_include_demand_and_reported_improvements() -> None:
     assert targets.loc["historical_february_2018_demand", "expected"] == 2089
     assert targets.loc["simulated_monthly_demand", "lower"] == 1828
     assert targets.loc["simulated_monthly_demand", "upper"] == 1930
+    assert targets.loc["mri_waiting_room_queue_before", "expected"] == 17
     assert targets.loc["mri_waiting_room_queue_after", "expected"] == 5
-    assert targets.loc["scenario_11_system_time_reduction", "expected"] == 20
+    assert targets.loc["system_time_reduction", "expected"] == 20
 
 
 def test_manifest_validation_rejects_missing_sections() -> None:
