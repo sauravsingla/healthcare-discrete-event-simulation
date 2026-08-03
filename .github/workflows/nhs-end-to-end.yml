@@ -108,7 +108,7 @@ jobs:
 
       - name: Upload derived benchmark results and diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nhs-mri-derived-benchmark-results
           path: outputs/nhs_end_to_end

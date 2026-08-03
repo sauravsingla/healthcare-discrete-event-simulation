@@ -154,7 +154,7 @@ jobs:
           /tmp/healthcare-des-wheel/bin/healthcare-des --help
       - name: Upload coverage, benchmark and distributions
         if: always() && matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quality-artifacts
           path: |
