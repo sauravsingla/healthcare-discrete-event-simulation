@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import heapq
 from dataclasses import asdict, dataclass
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -20,7 +20,7 @@ class _DeadlineEvent(simpy.Event):
         super().__init__(env)
         self._ok = True
         self._value = None
-        env.schedule(self, priority=2, delay=max(0.0, delay))
+        env.schedule(self, priority=cast(Any, 2), delay=max(0.0, delay))
 
 
 class _NotifyingPriorityResource(simpy.PriorityResource):
