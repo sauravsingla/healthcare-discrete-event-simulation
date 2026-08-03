@@ -40,6 +40,67 @@ This repository modernises and extends Saurav Singla (2020), **Demand and Capaci
 
 The NHS result is an external aggregate forecasting benchmark. It does **not** validate patient-level DES behaviour, clinical safety or local operational readiness.
 
+## Implemented capabilities and verified results
+
+The following capabilities are implemented in the repository and were exercised by the merged CI workflow. Results distinguish software verification from external aggregate-data evidence.
+
+| Implemented capability | What is available | Verified result or evidence |
+|---|---|---|
+| Patient demand generation | Outpatient appointments, inpatient arrivals and 24-hour emergency arrivals | All patient types execute through the advanced DES and reconcile in the patient ledger |
+| Multi-stage patient flow | Reception, preparation, MRI scanning and reporting | End-to-end smoke test produced non-empty patient and state outputs with lifecycle reconciliation |
+| System-wide MRI priority dispatch | Emergency before inpatient before outpatient | Priority-order regression tests passed |
+| FIFO within each priority | Arrival sequence retained for patients with equal priority | Equal-priority FIFO regression tests passed |
+| Multiple MRI scanners | Central dispatcher allocates across all available machines | Simultaneous scanner-release regression tests passed |
+| Explicit queue measurement | Total MRI queue and emergency, inpatient and outpatient queue counts | Queue accounting tests passed; queue values are generated from the actual central waiting queue |
+| Urgent-aware capacity reserve | Configurable protection of capacity when urgent demand is waiting | Reserve-behaviour regression tests passed |
+| Dynamic staffing | Time-varying clerk, radiographer and radiologist capacity | Capacity reduction and token-accounting tests passed |
+| Queue-wait patience | Waiting consumes patience; active service does not | Waiting-budget and deadline-boundary tests passed |
+| Cancellation and no-show | Separate pre-arrival outcomes for booked outpatients | Included in lifecycle ledger and reconciliation tests |
+| Abandonment | Stage-specific abandonment at reception, preparation or MRI waiting | Lifecycle and accounting tests passed |
+| Scan and report separation | Scan completion is retained even when reporting remains unfinished | Reporting-status regression tests passed |
+| Planned maintenance | `fixed_duration_after_release` and `fixed_calendar_window` policies | Maintenance-versus-dispatch timing tests passed |
+| MRI failure and repair | Stochastic failure, active-scan interruption, repair and optional scan restart | Repeated failure and scan-interruption tests passed |
+| Unique downtime accounting | Overlapping maintenance and failure blockers counted once | Downtime-overlap regression tests passed |
+| Simulation termination policies | Horizon, drain and bounded-drain execution | Termination and unfinished-patient tests passed |
+| Warm-up exclusion | Warm-up patients and state observations excluded from measured results | Warm-up-period tests passed |
+| Deterministic replications | Seed plus replication index produces reproducible but distinct runs | Determinism and replication tests passed |
+| Bootstrap uncertainty | Mean, standard deviation and 95% bootstrap intervals | Deterministic summary tests passed |
+| Sensitivity analysis | Monte Carlo and one-at-a-time parameter analysis | Implemented in the package and covered by the test suite |
+| Capacity comparison | Scenario benchmarking across demand and MRI-capacity combinations | 18 synthetic scenarios and 36 measured runs retained as evidence |
+| Queueing-theory reference | Simplified stable-case comparison using Little's Law | Approximate Little's Law consistency test passed |
+| External forecasting benchmark | Leakage-free transparent NHS MRI activity benchmark | National holdout WAPE 2.2491%; 821,577 predicted versus 840,480 observed |
+| Provider-level benchmark | Provider-level holdout evaluation | Median provider WAPE 13.0128%; 68.5% at or below 20% WAPE |
+| Public Python API | Basic and advanced simulation functions and result objects | Installed-package smoke test passed |
+| Command-line applications | Scenario runner, benchmark runner, reproduction runner and advanced benchmark | All four installed CLI entry points passed `--help` checks |
+| Research outputs | CSV, JSON metadata, figures, PDF/LaTeX/manifest-capable reporting workflows | Example outputs, benchmark metadata and README assets generated successfully in CI |
+| Streamlit dashboard | Interactive scenario and result exploration | Container health endpoint passed |
+| Docker deployment | Reproducible dashboard container | Image build, startup and endpoint verification passed |
+| Python compatibility | Python 3.10, 3.11 and 3.12 | All three CI jobs passed |
+| Repository quality | Ruff, Ruff Format, pre-commit and MyPy | All configured quality checks passed |
+| Test suite | Unit, integration, regression, invariant and end-to-end tests | **188 tests passed** |
+| Whole-package coverage | Coverage includes the complete `healthcare_des` package | **84.68% coverage**, above the 80% gate |
+| Core advanced implementation coverage | Coverage of the legacy/internal advanced engine and public advanced model | Approximately **93%** and **96%**, respectively |
+| Package distribution | Source distribution and wheel build | `python -m build`, `twine check` and clean-wheel installation passed |
+
+### Decision outputs produced by the implementation
+
+A simulation or benchmark run can produce:
+
+- booked, cancelled, expected-arrival, no-show, physical-arrival, completed, abandoned and unfinished counts;
+- completion rate and throughput per day;
+- reception, preparation, MRI and reporting queue waits;
+- total waiting time, system time and p90 system time;
+- total and patient-type-specific MRI queue observations;
+- mean and maximum queue length;
+- MRI availability, failures and unique downtime;
+- patient-level lifecycle records and machine assignment;
+- system-state observations over time;
+- replication-level results, standard deviations and bootstrap confidence intervals;
+- scenario benchmark tables, ranked capacity alternatives and machine-readable metadata;
+- charts, reports and dashboard views for exploratory analysis.
+
+These outputs support scenario comparison and research experimentation. They must be calibrated and independently validated with local operational and patient-level evidence before real-world deployment.
+
 ## What the platform models
 
 | Area | Capability |
