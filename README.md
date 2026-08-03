@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/sauravsingla/healthcare-discrete-event-simulation/actions/workflows/ci.yml/badge.svg)](https://github.com/sauravsingla/healthcare-discrete-event-simulation/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Coverage](https://img.shields.io/badge/whole--package%20coverage-gate%20%E2%89%A580%25-brightgreen)](#testing-and-quality)
+[![Coverage](https://img.shields.io/badge/whole--package%20coverage-84.80%25-brightgreen)](#testing-and-quality)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.4236%2Fojmsi.2020.84007-blue)](https://doi.org/10.4236/ojmsi.2020.84007)
 [![Docker](https://img.shields.io/badge/Docker-verified-2496ED?logo=docker&logoColor=white)](#dashboard-and-docker)
@@ -35,7 +35,10 @@ This repository modernises and extends Saurav Singla (2020), **Demand and Capaci
 | Provider-level median WAPE | 13.0128% |
 | Synthetic demand-capacity scenarios | 18 |
 | Measured simulation runs | 36 |
+| Latest verified tests | **193 passed** |
+| Latest whole-package coverage | **84.80%** |
 | Supported Python versions | 3.10, 3.11 and 3.12 |
+| Package version | **1.3.0** |
 | Coverage policy | Whole package, minimum 80% |
 
 The NHS result is an external aggregate forecasting benchmark. It does **not** validate patient-level DES behaviour, clinical safety or local operational readiness.
@@ -73,14 +76,36 @@ The following capabilities are implemented in the repository and were exercised 
 | Public Python API | Basic and advanced simulation functions and result objects | Installed-package smoke test passed |
 | Command-line applications | Scenario runner, benchmark runner, reproduction runner and advanced benchmark | All four installed CLI entry points passed `--help` checks |
 | Research outputs | CSV, JSON metadata, figures, PDF/LaTeX/manifest-capable reporting workflows | Example outputs, benchmark metadata and README assets generated successfully in CI |
-| Streamlit dashboard | Interactive scenario and result exploration | Container health endpoint passed |
-| Docker deployment | Reproducible dashboard container | Image build, startup and endpoint verification passed |
+| Streamlit dashboard | Interactive standard and advanced DES exploration, including queues by patient type, patient/report lifecycle, urgent reserve, maintenance policy, failures and downtime | Five dashboard transformation tests passed; Docker health endpoint and dashboard endpoint passed |
+| Docker deployment | Reproducible dashboard container | Image build, startup, health check and endpoint verification passed |
 | Python compatibility | Python 3.10, 3.11 and 3.12 | All three CI jobs passed |
-| Repository quality | Ruff, Ruff Format, pre-commit and MyPy | All configured quality checks passed |
-| Test suite | Unit, integration, regression, invariant and end-to-end tests | **188 tests passed** |
-| Whole-package coverage | Coverage includes the complete `healthcare_des` package | **84.68% coverage**, above the 80% gate |
+| Repository quality | Ruff, Ruff Format, pre-commit and MyPy | All configured quality gates passed |
+| Test suite | Unit, integration, regression, invariant, dashboard and end-to-end tests | **193 tests passed** |
+| Whole-package coverage | Coverage includes the complete `healthcare_des` package | **84.80% coverage**, above the 80% gate |
 | Core advanced implementation coverage | Coverage of the legacy/internal advanced engine and public advanced model | Approximately **93%** and **96%**, respectively |
-| Package distribution | Source distribution and wheel build | `python -m build`, `twine check` and clean-wheel installation passed |
+| Dashboard helper coverage | Pure transformations used by the Streamlit dashboard | Approximately **93%** coverage |
+| Package distribution | Version 1.3.0 source distribution and wheel | `python -m build`, `twine check`, version check and clean-wheel installation passed |
+
+### Latest verified CI snapshot
+
+The successful Python 3.12 quality run for version 1.3.0 verified:
+
+| Verification item | Result |
+|---|---:|
+| Tests collected and passed | **193 / 193** |
+| Whole-package coverage | **84.80%** |
+| Advanced engine coverage | **93%** |
+| Public advanced model coverage | **96%** |
+| Dashboard helper coverage | **93%** |
+| Installed CLI entry points | **4 / 4 passed** |
+| Advanced benchmark scenarios generated | **18** |
+| Example replication rows generated | **5** |
+| Ranked capacity candidates generated | **10** |
+| README performance charts generated | **3** |
+| Quality artifacts uploaded | **12 files** |
+| Package artifacts | Version 1.3.0 wheel and source distribution |
+| Docker verification | Build, startup, health and endpoint passed |
+| Non-failing test warnings | **3**: two regex-group warnings and one date-format inference warning |
 
 ### Decision outputs produced by the implementation
 
@@ -258,6 +283,16 @@ healthcare-des-advanced-benchmark \
 
 ## Dashboard and Docker
 
+The dashboard exposes both standard scenario summaries and a correctness-hardened advanced DES snapshot. It includes:
+
+- total, emergency, inpatient and outpatient MRI queue summaries;
+- completed, abandoned and unfinished patient counts;
+- patient and report lifecycle status;
+- urgent-aware MRI reserve control;
+- maintenance-policy selection;
+- MRI failure and unique-downtime KPIs;
+- scenario comparison and capacity-search outputs.
+
 ```bash
 streamlit run app.py
 ```
@@ -280,10 +315,11 @@ The repository distinguishes software verification from external and clinical va
 | Repeated scan interruption and repair | Regression tested |
 | Import-order independence | Regression tested |
 | Queue accounting | Explicit and regression tested |
-| Whole-package coverage | Minimum 80%, no core-engine omission |
+| Dashboard transformations | Five semantic regression tests passed |
+| Whole-package coverage | 84.80%, minimum gate 80%, no core-engine omission |
 | Multi-version compatibility | Python 3.10, 3.11 and 3.12 |
-| Package and CLI verification | Wheel build, installation and CLI smoke tests |
-| Dashboard deployment | Docker build and Streamlit health check |
+| Package and CLI verification | Version 1.3.0 wheel build, installation and CLI smoke tests |
+| Dashboard deployment | Docker build, Streamlit health check and endpoint verification |
 | External aggregate benchmark | Official NHS benchmark completed and versioned |
 | Patient-level local validation | Required before operational deployment |
 | Clinical safety validation | Required locally before operational use |
@@ -303,7 +339,9 @@ twine check dist/*
 
 Coverage applies to the complete `healthcare_des` package. The core/compatibility engine is no longer omitted from measurement.
 
-CI exercises Python 3.10, 3.11 and 3.12, repository-wide pre-commit checks, linting, typing, targeted regressions, strict whole-package coverage, installed CLI entry points, benchmark smoke tests, wheel installation, Docker build and the Streamlit health endpoint.
+The latest verified run passed **193 tests** with **84.80% whole-package coverage**. CI exercises Python 3.10, 3.11 and 3.12, repository-wide pre-commit checks, linting, typing, targeted regressions, dashboard helper tests, strict whole-package coverage, installed CLI entry points, benchmark smoke tests, example output generation, README asset generation, version 1.3.0 wheel installation, Docker build and the Streamlit health endpoint.
+
+The test run currently reports three non-failing warnings: two regular-expression capture-group warnings in the NHS end-to-end script and one date-format inference warning in the NHS benchmark scoring script.
 
 ## Official NHS external benchmark
 
