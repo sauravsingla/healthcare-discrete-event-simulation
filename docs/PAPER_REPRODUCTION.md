@@ -1,57 +1,88 @@
-# Numerical Reproduction of the 2020 Paper
+# Singla (2020) Reproduction Contract
 
-This document governs reproduction of all eleven scenarios in **Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation** (Singla, 2020).
+This repository contains a machine-readable reproduction contract for **Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation** (Singla, 2020), DOI `10.4236/ojmsi.2020.84007`.
 
-## Claim boundary
+## Source-backed run controls and assumptions
 
-A scenario is marked **reproduced** only when its source assumptions and published numerical targets have been transcribed from the paper or an authoritative author record, the repository configuration executes deterministically, and the reproduced statistics fall within a pre-declared tolerance. Missing source values are not guessed.
+The contract transcribes the assumptions disclosed in the article:
 
-## Reproduction matrix
+- 30-day simulation;
+- 4,320-minute warm-up, equivalent to three days;
+- 46 replications per scenario;
+- random sampling seed 17;
+- 57% outpatient, 24.08% inpatient and 18.92% emergency demand;
+- 8% outpatient no-show rate;
+- 90% staff and machine availability assumption;
+- morning, evening and night shifts of eight hours each;
+- radiographer staffing of 4, 3 and 2 by shift;
+- one clerk and one consultant per shift;
+- exponential reception service with mean eight minutes;
+- triangular preparation time `(4, 5, 6)` minutes;
+- uniform report interpretation time from 6 to 12 minutes;
+- normal MRI service-time family;
+- evening outpatient demand equal to 50% of daytime demand and night demand equal to 25%;
+- reception/waiting queue capacity 20 and MRI reading-room queue capacity 25.
 
-| Scenario | Experiment described in the paper | Authoritative inputs transcribed | Published numerical targets transcribed | Executable repository configuration | Numerical comparison | Status |
-|---:|---|---|---|---|---|---|
-| 1 | Outpatient arrival-rate experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 2 | Outpatient arrival-rate experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 3 | Outpatient arrival-rate experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 4 | MRI service-time distribution experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 5 | MRI service-time distribution experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 6 | MRI service-time distribution experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 7 | No-show mitigation by overbooking | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 8 | Time-positioned overbooking | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 9 | Extended-hours or capacity experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 10 | Staffing or capacity experiment | Incomplete in available source record | Pending source verification | Registered | Not evaluated | Not yet reproducible |
-| 11 | Final operating-policy experiment | Pending source verification | Pending source verification | Registered | Not evaluated | Not yet reproducible |
+## Published validation targets
 
-## Required numerical evidence
+The evidence bundle records the numerical claims stated in the article:
 
-For every scenario, retain:
+- February 2018 historical MRI demand: 2,089 scans;
+- simulated monthly demand: 1,828–1,930 scans;
+- MRI waiting-room queue reduced from approximately 17 minutes to 5 minutes;
+- scenario 11 outpatient system time reduced by approximately 20 minutes;
+- scenarios 9–11 identified as the strongest operating alternatives;
+- all eleven experiment intentions registered explicitly.
 
-- source page, table and figure references;
-- arrival assumptions and operating hours;
-- service-time distributions and parameters;
-- MRI, radiographer, radiologist, clerk and other capacity values;
-- no-show and overbooking rules;
-- run length, warm-up, replications and random-seed policy;
-- published means, percentages, utilisation, queue and waiting-time targets;
-- reproduced estimate, uncertainty interval, absolute difference and relative difference;
-- declared tolerance and final classification.
+## Machine-readable implementation
 
-## Classification
+The authoritative specification is implemented in `healthcare_des.paper_reproduction`.
 
-- **Reproduced:** all required values are authoritative and results meet the declared tolerance.
-- **Discrepant:** authoritative inputs and targets are available, but reproduced results do not meet tolerance.
-- **Not verifiable:** the paper or author record does not provide enough information to perform an exact comparison.
-- **Not yet evaluated:** implementation or authoritative transcription is incomplete.
+```python
+from healthcare_des import (
+    PUBLISHED_SPEC,
+    paper_base_config,
+    published_targets,
+    reproduction_manifest,
+    validate_reproduction_manifest,
+)
 
-## Reproduction workflow
+manifest = reproduction_manifest()
+validate_reproduction_manifest(manifest)
+config = paper_base_config()
+targets = published_targets()
+```
 
-1. Transcribe authoritative inputs and expected outputs with page, table or figure references.
-2. Store them in machine-readable configuration and target files.
-3. Freeze the package and dependency environment.
-4. Run the declared replication and seed policy.
-5. Compare reproduced and published outcomes using predeclared tolerances.
-6. Preserve commands, logs, configurations, outputs and discrepancy analysis.
+Export the evidence bundle with:
 
-## Current conclusion
+```bash
+python scripts/export_paper_reproduction_spec.py \
+  --output-dir outputs/paper_reproduction
+```
 
-The repository contains executable registrations for eleven scenarios, but exact numerical reproduction is not yet claimed. The missing element is authoritative transcription of complete scenario inputs and published numerical targets. Recording this explicitly prevents synthetic or guessed targets from being presented as reproduced research evidence.
+This writes:
+
+- `singla_2020_reproduction_manifest.json`;
+- `singla_2020_published_targets.csv`.
+
+## Scenario registry
+
+| Scenario | Published experiment intention |
+|---:|---|
+| 1 | Outpatient arrival profile: 8-hour access |
+| 2 | Outpatient arrival profile: 16-hour access |
+| 3 | Outpatient arrival profile: 24-hour access |
+| 4 | MRI service-time distribution experiment A |
+| 5 | MRI service-time distribution experiment B |
+| 6 | MRI service-time distribution experiment C |
+| 7 | Normal-hours overbooking to offset no-shows |
+| 8 | Start/end-of-hour overbooking |
+| 9 | Exclusive resources for emergency patients |
+| 10 | Exclusive resources for inpatient and emergency patients |
+| 11 | Staff capacity changed to match demand by shift |
+
+## Fidelity boundary
+
+The contract completes the repository's authoritative transcription of the assumptions and numerical targets disclosed in the article. It prevents current defaults or guessed values from being presented as published evidence.
+
+The original study was built in Simul8. The general Python engine directly supports the normal MRI service family and exponential reception service. The published Pearson V arrivals, triangular preparation distribution and uniform report-interpretation distribution are retained explicitly in the manifest; the closest general-engine baseline uses their disclosed central values. Therefore, the repository provides an auditable source-backed reproduction contract and comparison targets, but does not claim bit-for-bit equivalence with the proprietary Simul8 event calendar or random-number stream.
