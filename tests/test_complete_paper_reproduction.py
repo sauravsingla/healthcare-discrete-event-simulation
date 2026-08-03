@@ -92,9 +92,7 @@ def test_reproduced_result_comparison_reports_pass_and_fail() -> None:
         ]
     )
     comparison = compare_reproduced_results(reproduced, tolerance_pct=10)
-    demand = comparison.loc[
-        comparison["metric"].eq("historical_february_2018_demand")
-    ].iloc[0]
+    demand = comparison.loc[comparison["metric"].eq("historical_february_2018_demand")].iloc[0]
     scenario_11 = comparison.loc[comparison["metric"].eq("system_time_reduction")].iloc[0]
     assert bool(demand["passed"])
     assert bool(scenario_11["passed"])
