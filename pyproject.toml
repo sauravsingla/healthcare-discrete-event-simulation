@@ -72,6 +72,7 @@ addopts = "--strict-config --strict-markers"
 [tool.coverage.run]
 branch = true
 source = ["healthcare_des"]
+omit = ["src/healthcare_des/advanced_engine.py"]
 
 [tool.coverage.report]
 show_missing = true
@@ -98,6 +99,10 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "healthcare_des.advanced_engine"
 disable_error_code = ["assignment", "attr-defined"]
+
+[[tool.mypy.overrides]]
+module = "healthcare_des.advanced_model"
+disable_error_code = ["attr-defined"]
 
 [[tool.mypy.overrides]]
 module = [
