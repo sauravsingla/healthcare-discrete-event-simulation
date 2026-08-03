@@ -22,7 +22,15 @@ def test_published_targets_include_before_and_after_queue_results() -> None:
     targets = published_targets().set_index("target")
     assert targets.loc["mri_waiting_room_queue_before", "expected"] == 17
     assert targets.loc["mri_waiting_room_queue_after", "expected"] == 5
-    assert targets.loc["scenario_11_system_time_reduction" if "scenario_11_system_time_reduction" in targets.index else "system_time_reduction", "expected"] == 20
+    assert (
+        targets.loc[
+            "scenario_11_system_time_reduction"
+            if "scenario_11_system_time_reduction" in targets.index
+            else "system_time_reduction",
+            "expected",
+        ]
+        == 20
+    )
 
 
 def test_all_eleven_scenarios_are_indexed_without_invented_values() -> None:
@@ -61,7 +69,9 @@ def test_constraint_status_is_explicit_about_supported_and_retained_items() -> N
 
 def test_comparison_template_covers_all_scenarios_and_available_targets() -> None:
     template = comparison_template()
-    assert set(f"scenario-{index:02d}" for index in range(1, 12)).issubset(set(template["scenario"]))
+    assert set(f"scenario-{index:02d}" for index in range(1, 12)).issubset(
+        set(template["scenario"])
+    )
     assert "mri_waiting_room_queue_before" in set(template["metric"])
     assert template["reproduced_value"].isna().all()
 
@@ -69,12 +79,22 @@ def test_comparison_template_covers_all_scenarios_and_available_targets() -> Non
 def test_reproduced_result_comparison_reports_pass_and_fail() -> None:
     reproduced = pd.DataFrame(
         [
-            {"scenario": "baseline", "metric": "historical_february_2018_demand", "reproduced_value": 2089},
-            {"scenario": "scenario-11", "metric": "system_time_reduction", "reproduced_value": 18},
+            {
+                "scenario": "baseline",
+                "metric": "historical_february_2018_demand",
+                "reproduced_value": 2089,
+            },
+            {
+                "scenario": "scenario-11",
+                "metric": "system_time_reduction",
+                "reproduced_value": 18,
+            },
         ]
     )
     comparison = compare_reproduced_results(reproduced, tolerance_pct=10)
-    demand = comparison.loc[comparison["metric"].eq("historical_february_2018_demand")].iloc[0]
+    demand = comparison.loc[
+        comparison["metric"].eq("historical_february_2018_demand")
+    ].iloc[0]
     scenario_11 = comparison.loc[comparison["metric"].eq("system_time_reduction")].iloc[0]
     assert bool(demand["passed"])
     assert bool(scenario_11["passed"])
