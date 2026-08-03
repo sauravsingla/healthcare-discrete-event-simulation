@@ -300,19 +300,13 @@ def compare_reproduced_results(
     missing = required - set(reproduced.columns)
     if missing:
         raise ValueError(f"Missing reproduced columns: {', '.join(sorted(missing))}")
-    targets = published_targets().rename(
-        columns={"target": "metric", "expected": "paper_value"}
-    )
+    targets = published_targets().rename(columns={"target": "metric", "expected": "paper_value"})
     merged = targets.merge(reproduced, on=["scenario", "metric"], how="left")
-    merged["absolute_difference"] = (
-        merged["reproduced_value"] - merged["paper_value"]
-    ).abs()
+    merged["absolute_difference"] = (merged["reproduced_value"] - merged["paper_value"]).abs()
     denominator = merged["paper_value"].abs().replace(0, 1)
     merged["error_pct"] = merged["absolute_difference"] / denominator * 100
     merged["tolerance_pct"] = tolerance_pct
-    merged["passed"] = merged["reproduced_value"].notna() & (
-        merged["error_pct"] <= tolerance_pct
-    )
+    merged["passed"] = merged["reproduced_value"].notna() & (merged["error_pct"] <= tolerance_pct)
     return merged
 
 
