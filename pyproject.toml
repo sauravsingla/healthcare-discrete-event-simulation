@@ -1,21 +1,21 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "healthcare-des"
-version = "1.2.0"
+version = "1.3.0"
 description = "Reproducible healthcare demand and capacity modelling with discrete-event simulation"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{name = "Saurav Singla"}]
 keywords = ["healthcare", "simulation", "simpy", "capacity-planning", "patient-flow", "operations-research", "MRI", "digital-twin", "monte-carlo", "resource-optimisation"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Healthcare Industry",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -38,6 +38,7 @@ Homepage = "https://github.com/sauravsingla/healthcare-discrete-event-simulation
 Repository = "https://github.com/sauravsingla/healthcare-discrete-event-simulation"
 Issues = "https://github.com/sauravsingla/healthcare-discrete-event-simulation/issues"
 Documentation = "https://github.com/sauravsingla/healthcare-discrete-event-simulation#readme"
+Changelog = "https://github.com/sauravsingla/healthcare-discrete-event-simulation/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dashboard = ["streamlit>=1.36,<2"]

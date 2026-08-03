@@ -5,7 +5,9 @@ from dataclasses import replace
 import pandas as pd
 import streamlit as st
 
+from healthcare_des import AdvancedScenarioConfig, run_advanced_once
 from healthcare_des.benchmark import benchmark_scenarios
+from healthcare_des.dashboard_support import advanced_kpis, lifecycle_summary, queue_summary
 from healthcare_des.model import ScenarioConfig, run_replications, summarise
 from healthcare_des.optimisation import search_capacity
 
@@ -25,6 +27,11 @@ with st.sidebar:
     no_show_rate = st.slider("Outpatient no-show rate", 0.0, 0.30, 0.08, 0.01)
     replications = st.slider("Simulation replications", 3, 30, 10)
     warmup_days = st.slider("Warm-up days", 0, 14, 2)
+    emergency_reserve = st.slider("Urgent-aware MRI reserve", 0.0, 0.50, 0.15, 0.05)
+    maintenance_policy = st.selectbox(
+        "Maintenance policy",
+        ["fixed_duration_after_release", "fixed_calendar_window"],
+    )
 
 config = ScenarioConfig(
     name="dashboard",
@@ -100,6 +107,43 @@ patient_types = pd.DataFrame(
 ).set_index("patient_type")
 st.bar_chart(patient_types)
 
+st.subheader("Correctness-hardened advanced DES snapshot")
+advanced_config = replace(
+    AdvancedScenarioConfig(),
+    name="dashboard-advanced",
+    days=2,
+    warmup_days=0,
+    daily_demand=float(daily_demand),
+    operating_hours=int(operating_hours),
+    mri_machines=int(mri_machines),
+    no_show_rate=float(no_show_rate),
+    emergency_capacity_reserve=float(emergency_reserve),
+    maintenance_policy=maintenance_policy,
+    bootstrap_samples=100,
+)
+advanced_result, advanced_patients, advanced_state = run_advanced_once(advanced_config)
+advanced = advanced_kpis(advanced_result)
+advanced_columns = st.columns(6)
+advanced_columns[0].metric("Completed", int(advanced["completed"]))
+advanced_columns[1].metric("Abandoned", int(advanced["abandoned"]))
+advanced_columns[2].metric("Unfinished", int(advanced["unfinished"]))
+advanced_columns[3].metric("Max MRI queue", int(advanced["max_queue_length"]))
+advanced_columns[4].metric("MRI failures", int(advanced["mri_failures"]))
+advanced_columns[5].metric("MRI downtime", f"{advanced['mri_downtime_minutes']:.1f} min")
+
+left, right = st.columns(2)
+with left:
+    st.markdown("**Explicit MRI queue observations**")
+    st.dataframe(queue_summary(advanced_state), use_container_width=True)
+with right:
+    st.markdown("**Patient and reporting lifecycle**")
+    st.dataframe(lifecycle_summary(advanced_patients), use_container_width=True)
+
+st.caption(
+    f"Reserve policy: urgent-aware {emergency_reserve:.0%}; maintenance policy: {maintenance_policy}. "
+    "Routine patients may use spare capacity when no urgent patient is queued."
+)
+
 with st.expander("Replication-level results"):
     st.dataframe(results, use_container_width=True)
 
@@ -133,6 +177,5 @@ if st.button("Run capacity search"):
     st.dataframe(candidates.head(10), use_container_width=True)
 
 st.info(
-    "This research model uses synthetic or public aggregate data and is not a clinical "
-    "scheduling system."
+    "This research model uses synthetic or public aggregate data and is not a clinical scheduling system."
 )
