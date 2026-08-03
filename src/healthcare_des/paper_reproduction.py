@@ -68,9 +68,6 @@ class PublishedPaperSpecification:
 
 PUBLISHED_SPEC = PublishedPaperSpecification()
 
-# The article describes these eleven experiment intentions explicitly.  Keeping
-# them as labels prevents current implementation choices from being mistaken
-# for values printed in the original Simul8 scenario table.
 PUBLISHED_SCENARIO_INTENT = {
     "scenario-01": "outpatient arrival profile experiment: 8-hour access",
     "scenario-02": "outpatient arrival profile experiment: 16-hour access",
@@ -87,12 +84,7 @@ PUBLISHED_SCENARIO_INTENT = {
 
 
 def paper_base_config() -> AdvancedScenarioConfig:
-    """Return the closest supported configuration for the published baseline.
-
-    Values are drawn directly from the article.  Distribution families that are
-    not configurable in the general engine remain recorded in ``PUBLISHED_SPEC``
-    and in the generated manifest, rather than being silently replaced.
-    """
+    """Return the closest supported configuration for the published baseline."""
 
     return AdvancedScenarioConfig(
         name="singla-2020-published-baseline",
@@ -110,8 +102,7 @@ def paper_base_config() -> AdvancedScenarioConfig:
         reception_mean=PUBLISHED_SPEC.reception_exponential_mean_minutes,
         preparation_mean=PUBLISHED_SPEC.preparation_triangular_mode,
         report_mean=(
-            PUBLISHED_SPEC.report_uniform_low_minutes
-            + PUBLISHED_SPEC.report_uniform_high_minutes
+            PUBLISHED_SPEC.report_uniform_low_minutes + PUBLISHED_SPEC.report_uniform_high_minutes
         )
         / 2,
         clerk_capacity=(
