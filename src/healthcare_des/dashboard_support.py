@@ -45,7 +45,9 @@ def queue_summary(state: pd.DataFrame) -> pd.DataFrame:
     available = [column for column in columns if column in state]
     means = state[available].mean().reindex(columns, fill_value=0.0)
     maxima = state[available].max().reindex(columns, fill_value=0).astype(int)
-    return pd.DataFrame({"queue": labels, "mean": means.to_numpy(), "maximum": maxima.to_numpy()}).set_index("queue")
+    return pd.DataFrame(
+        {"queue": labels, "mean": means.to_numpy(), "maximum": maxima.to_numpy()}
+    ).set_index("queue")
 
 
 def lifecycle_summary(patients: pd.DataFrame) -> pd.DataFrame:
@@ -61,9 +63,7 @@ def lifecycle_summary(patients: pd.DataFrame) -> pd.DataFrame:
     rows: list[dict[str, Any]] = [
         {"status": f"patient:{name}", "count": int(value)} for name, value in status.items()
     ]
-    rows.extend(
-        {"status": f"report:{name}", "count": int(value)} for name, value in report.items()
-    )
+    rows.extend({"status": f"report:{name}", "count": int(value)} for name, value in report.items())
     return pd.DataFrame(rows).set_index("status")
 
 
