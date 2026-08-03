@@ -35,7 +35,7 @@ This repository modernises and extends Saurav Singla (2020), **Demand and Capaci
 | Latest verified tests | **210 passed** |
 | Latest whole-package coverage | **91.88%** |
 | Supported Python versions | 3.10, 3.11 and 3.12 |
-| Package version | **1.3.0** |
+| Package version | **1.4.0** |
 | Coverage policy | Whole package, minimum 80% |
 
 The NHS result is an external aggregate forecasting benchmark. It does **not** validate patient-level DES behaviour, clinical safety or local operational readiness.
@@ -218,75 +218,20 @@ The Docker workflow verifies image build, startup, health and the Streamlit dash
 ## Testing and quality
 
 ```bash
-pre-commit run --all-files
-ruff check src tests scripts examples
-mypy src/healthcare_des
-pytest --cov=healthcare_des --cov-report=term-missing --cov-fail-under=80
+python -m pytest
+ruff check .
+ruff format --check .
+mypy src
 python -m build
-twine check dist/*
+python -m twine check dist/*
 ```
 
-Latest merged verification before PR #59:
+The repository enforces an 80% whole-package coverage threshold and tests the public package across Python 3.10, 3.11 and 3.12.
 
-- **210 tests passed**
-- **91.88% whole-package coverage**
-- **zero pytest warnings**
-- Python 3.10, 3.11 and 3.12 supported
-- Ruff, Ruff Format, pre-commit and MyPy enabled
-- package and Docker checks enabled
+## Research and operational claim limits
 
-The final totals for PR #59 will be refreshed from its successful CI result before merge if they change.
+This software supports reproducible research, scenario analysis and aggregate operational benchmarking. It is not a clinically validated medical device and must not be used for patient-care decisions without local governance, authoritative data, independent validation and clinical safety review.
 
-## Official NHS external benchmark
+## Licence
 
-The transparent `lag_1` baseline achieved **2.2491% national holdout WAPE**, predicting 821,577 MRI activities against 840,480 observed. Median provider WAPE was 13.0128%, with 68.5% of evaluated providers at or below 20% WAPE.
-
-Full evidence is available in [`docs/benchmarks/nhs/2026-08-02/`](docs/benchmarks/nhs/2026-08-02/README.md).
-
-## Assumptions and limitations
-
-The platform focuses on MRI patient flow rather than the entire radiology service. Default assumptions remain illustrative until calibrated against authoritative local evidence.
-
-The paper reproduction evidence does not establish bit-for-bit Simul8 equivalence. The original model, exact event calendar, Pearson V parameters and random streams are unavailable. Scenario-level numerical comparisons are produced only where authoritative published values are available.
-
-The external NHS benchmark evaluates aggregate forecasting and evidence-processing capability. It does not demonstrate patient-level accuracy, causal impact, clinical safety or production scheduling readiness.
-
-Real-world use requires independent validation of local pathways, workforce rules, costs, service targets, safety constraints, data quality and governance requirements.
-
-## Repository structure
-
-```text
-.
-├── src/healthcare_des/      # Simulation, experiments and analysis
-├── tests/                   # Unit, integration and regression tests
-├── examples/                # Reproducible usage examples
-├── configs/                 # YAML scenario configurations
-├── data/                    # Templates and non-sensitive aggregate inputs
-├── docs/                    # Validation, paper evidence and benchmarks
-├── scripts/                 # Benchmarking and evidence export workflows
-├── outputs/                 # Generated machine-readable results
-├── app.py                   # Streamlit dashboard entry point
-├── pyproject.toml           # Package and tooling configuration
-└── Dockerfile               # Reproducible container deployment
-```
-
-## Citation
-
-```bibtex
-@article{singla2020demand,
-  title={Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation},
-  author={Singla, Saurav},
-  journal={Open Journal of Modelling and Simulation},
-  volume={8},
-  pages={88--107},
-  year={2020},
-  doi={10.4236/ojmsi.2020.84007}
-}
-```
-
-## Author
-
-**Saurav Singla**
-
-- [LinkedIn](https://www.linkedin.com/in/sauravsingla008/)
-- [ORCID](https://orcid.org/0000-0002-6404-3988)
+MIT. See [LICENSE](LICENSE).
