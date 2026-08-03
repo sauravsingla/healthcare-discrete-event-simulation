@@ -35,7 +35,7 @@ This repository modernises and extends Saurav Singla (2020), **Demand and Capaci
 | Provider-level median WAPE | 13.0128% |
 | Synthetic demand-capacity scenarios | 18 |
 | Measured simulation runs | 36 |
-| Latest verified tests | **209 passed** |
+| Latest verified tests | **210 passed** |
 | Latest whole-package coverage | **91.88%** |
 | Supported Python versions | 3.10, 3.11 and 3.12 |
 | Package version | **1.3.0** |
@@ -75,12 +75,12 @@ The following capabilities are implemented in the repository and were exercised 
 | Provider-level benchmark | Provider-level holdout evaluation | Median provider WAPE 13.0128%; 68.5% at or below 20% WAPE |
 | Public Python API | Basic and advanced simulation functions and result objects | Installed-package smoke test passed |
 | Command-line applications | Scenario runner, benchmark runner, reproduction runner and advanced benchmark | All four installed CLI entry points passed `--help` checks |
-| Research outputs | CSV, JSON metadata, figures, PDF/LaTeX/manifest-capable reporting workflows | Example outputs, benchmark metadata and README assets generated successfully in CI |
+| Research outputs | CSV, JSON metadata, figures, PDF/LaTeX/manifest-capable reporting workflows | Example outputs, benchmark metadata, README assets and paper-reproduction evidence generated successfully in CI |
 | Streamlit dashboard | Interactive standard and advanced DES exploration, including queues by patient type, patient/report lifecycle, urgent reserve, maintenance policy, failures and downtime | Five dashboard transformation tests passed; Docker health endpoint and dashboard endpoint passed |
 | Docker deployment | Reproducible dashboard container | Image build, startup, health check and endpoint verification passed |
 | Python compatibility | Python 3.10, 3.11 and 3.12 | All three CI jobs passed |
 | Repository quality | Ruff, Ruff Format, pre-commit and MyPy | All configured quality gates passed |
-| Test suite | Unit, integration, regression, invariant, dashboard and end-to-end tests | **209 tests passed** |
+| Test suite | Unit, integration, regression, invariant, dashboard and end-to-end tests | **210 tests passed** |
 | Whole-package coverage | Coverage includes the complete `healthcare_des` package | **91.88% coverage**, above the 80% gate |
 | Core advanced implementation coverage | Coverage of the legacy/internal advanced engine and public advanced model | Approximately **93%** and **96%**, respectively |
 | Dashboard helper coverage | Pure transformations used by the Streamlit dashboard | Approximately **93%** coverage |
@@ -92,7 +92,7 @@ The successful Python 3.12 quality run for version 1.3.0 verified:
 
 | Verification item | Result |
 |---|---:|
-| Tests collected and passed | **209 / 209** |
+| Tests collected and passed | **210 / 210** |
 | Whole-package coverage | **91.88%** |
 | Advanced engine coverage | **93%** |
 | Public advanced model coverage | **96%** |
@@ -106,10 +106,10 @@ The successful Python 3.12 quality run for version 1.3.0 verified:
 | Example replication rows generated | **5** |
 | Ranked capacity candidates generated | **10** |
 | README performance charts generated | **3** |
-| Quality artifacts uploaded | **12 files** |
+| Paper reproduction evidence | DOI, 11 scenarios and 46 replications validated; JSON and CSV archived |
 | Package artifacts | Version 1.3.0 wheel and source distribution |
 | Docker verification | Build, startup, health and endpoint passed |
-| Non-failing test warnings | **2** regex capture-group warnings in the NHS end-to-end ingestion workflow |
+| Pytest warnings | **0** |
 
 ### Decision outputs produced by the implementation
 
@@ -156,6 +156,8 @@ MRI allocation uses one system-wide priority queue:
 2. inpatient;
 3. outpatient;
 4. FIFO order within each priority class.
+
+Dispatch is event-driven. Queue arrivals, scanner releases and availability-state changes wake the dispatcher immediately, without a polling interval or added patience allowance. Exact patience-deadline ordering is regression tested.
 
 Queue metrics are measured from the explicit waiting queue and include total, emergency, inpatient and outpatient counts.
 
@@ -313,6 +315,7 @@ The repository distinguishes software verification from external and clinical va
 | Area | Current status |
 |---|---|
 | Priority and FIFO behaviour | Regression tested |
+| Event-driven scanner dispatch | Regression tested, including exact patience-deadline ordering |
 | Simultaneous scanner release | Regression tested |
 | Maintenance-versus-dispatch timing | Regression tested |
 | Timeout-versus-dispatch boundary | Regression tested |
@@ -323,6 +326,7 @@ The repository distinguishes software verification from external and clinical va
 | Whole-package coverage | 91.88%, minimum gate 80%, no core-engine omission |
 | Multi-version compatibility | Python 3.10, 3.11 and 3.12 |
 | Package and CLI verification | Version 1.3.0 wheel build, installation and CLI smoke tests |
+| Paper reproduction contract | Source-backed manifest and published-target CSV validated in CI |
 | Dashboard deployment | Docker build, Streamlit health check and endpoint verification |
 | External aggregate benchmark | Official NHS benchmark completed and versioned |
 | Patient-level local validation | Required before operational deployment |
@@ -343,9 +347,7 @@ twine check dist/*
 
 Coverage applies to the complete `healthcare_des` package. The core/compatibility engine is no longer omitted from measurement.
 
-The latest verified run passed **209 tests** with **91.88% whole-package coverage**. CI exercises Python 3.10, 3.11 and 3.12, repository-wide pre-commit checks, linting, typing, targeted regressions, dashboard helper tests, strict whole-package coverage, installed CLI entry points, benchmark smoke tests, example output generation, README asset generation, version 1.3.0 wheel installation, Docker build and the Streamlit health endpoint.
-
-The test run currently reports two non-failing regular-expression capture-group warnings in the NHS end-to-end ingestion workflow. The previous date-format inference warning has been removed by explicit mixed-format month parsing.
+The latest verified run passed **210 tests** with **91.88% whole-package coverage** and **zero pytest warnings**. CI exercises Python 3.10, 3.11 and 3.12, repository-wide pre-commit checks, linting, typing, targeted regressions, dashboard helper tests, strict whole-package coverage, installed CLI entry points, benchmark smoke tests, example output generation, README asset generation, paper-reproduction evidence export, version 1.3.0 wheel installation, Docker build and the Streamlit health endpoint.
 
 ## Official NHS external benchmark
 
@@ -356,6 +358,8 @@ Provider-level performance is more variable. The median provider WAPE was 13.012
 ## Assumptions and limitations
 
 The project focuses on MRI patient flow rather than the entire radiology service. Default assumptions are illustrative until calibrated against authoritative local evidence.
+
+The paper reproduction module records the published DOI, run controls, patient mix, distribution families, aggregate targets and all eleven scenario intentions. It provides a source-backed reproduction contract and machine-readable evidence, but does not claim bit-for-bit equivalence with the original Simul8 model where proprietary event-calendar and random-stream details are unavailable.
 
 The external NHS benchmark evaluates aggregate forecasting and evidence-processing capability. It does not demonstrate patient-level accuracy, causal impact, clinical safety or production scheduling readiness.
 
