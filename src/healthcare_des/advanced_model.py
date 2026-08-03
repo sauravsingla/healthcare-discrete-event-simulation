@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import heapq
 from dataclasses import asdict, dataclass
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 import numpy as np
 import pandas as pd
@@ -33,20 +33,30 @@ class AdvancedScenarioConfig(_engine.AdvancedScenarioConfig):
 class MRIMachine(_engine.MRIMachine):
     """MRI machine with interrupt-safe scans and unique downtime accounting."""
 
-    def __init__(self, env, machine_id, config: AdvancedScenarioConfig, rng):
+    def __init__(
+        self,
+        env,
+        machine_id,
+        config: AdvancedScenarioConfig,
+        rng,
+        availability_changed: Callable[[], None] | None = None,
+    ):
         self._unavailable_since: float | None = None
+        self._availability_changed = availability_changed or (lambda: None)
         super().__init__(env, machine_id, config, rng)
 
     def _add_blocker(self, blocker: str) -> None:
         if not self.blockers:
             self._unavailable_since = float(self.env.now)
         self.blockers.add(blocker)
+        self._availability_changed()
 
     def _remove_blocker(self, blocker: str) -> None:
         self.blockers.discard(blocker)
         if not self.blockers and self._unavailable_since is not None:
             self.downtime += float(self.env.now) - self._unavailable_since
             self._unavailable_since = None
+        self._availability_changed()
 
     def _maintenance_calendar(self):
         windows = [w for w in self.config.machine_maintenance if w.machine_id == self.machine_id]
@@ -118,10 +128,11 @@ class MRIMachine(_engine.MRIMachine):
         finally:
             self.active_scan = None
             self.state = "AVAILABLE" if not self.blockers else self.state
+            self._availability_changed()
 
 
 class AdvancedMRIModel(_engine.AdvancedMRIModel):
-    """Advanced model with one system-wide priority MRI dispatch queue."""
+    """Advanced model with one event-driven system-wide priority MRI queue."""
 
     def __init__(self, env, config, rng):
         self.env = env
@@ -130,8 +141,10 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
         self.clerks = _engine.DynamicCapacity(env, 1, config.clerk_capacity)
         self.radiographers = _engine.DynamicCapacity(env, 1, config.radiographer_capacity)
         self.radiologists = _engine.DynamicCapacity(env, 1, config.radiologist_capacity)
+        self._mri_dispatch_signal = env.event()
         self.machines = [
-            MRIMachine(env, index, config, rng) for index in range(config.mri_machines)
+            MRIMachine(env, index, config, rng, self._notify_mri_dispatch)
+            for index in range(config.mri_machines)
         ]
         self.ledger: dict[int, dict[str, Any]] = {}
         self.state: list[dict[str, float | str | bool]] = []
@@ -140,6 +153,26 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
         self._mri_sequence = 0
         env.process(self._track_state())
         env.process(self._dispatch_mri())
+
+    def _notify_mri_dispatch(self) -> None:
+        """Wake the dispatcher when demand or machine availability changes."""
+        if not self._mri_dispatch_signal.triggered:
+            self._mri_dispatch_signal.succeed()
+
+    def _consume_mri_dispatch_signal(self) -> simpy.Event:
+        signal = self._mri_dispatch_signal
+        self._mri_dispatch_signal = self.env.event()
+        return signal
+
+    def _deadline_barrier(self, deadline: float):
+        """Expire at the exact deadline after all same-timestamp events settle."""
+        delay = max(0.0, deadline - float(self.env.now))
+        if delay:
+            yield self.env.timeout(delay)
+        # A zero-duration barrier preserves the deadline while allowing scanner
+        # release and dispatcher wake events already scheduled at this timestamp
+        # to run before patience is declared exhausted.
+        yield self.env.timeout(0)
 
     def _track_state(self):
         while True:
@@ -204,8 +237,16 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
                     event.succeed((machine, request))
                 else:
                     machine.resource.release(request)
+                    self._notify_mri_dispatch()
                 dispatched = True
-            yield self.env.timeout(0 if dispatched else 0.1)
+            if dispatched:
+                yield self.env.timeout(0)
+                continue
+            signal = self._consume_mri_dispatch_signal()
+            if signal.triggered:
+                yield self.env.timeout(0)
+            else:
+                yield signal
 
     def _acquire_any_machine(self, priority: int, deadline: float, patient_type: str | None = None):
         patient_type = patient_type or next(
@@ -214,14 +255,15 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
         event = self.env.event()
         self._mri_sequence += 1
         heapq.heappush(self._mri_waiters, (priority, self._mri_sequence, patient_type, event))
-        dispatch_grace = 0.100001
-        timeout = self.env.timeout(max(0.0, deadline - float(self.env.now)) + dispatch_grace)
+        self._notify_mri_dispatch()
+        timeout = self.env.process(self._deadline_barrier(deadline))
         outcome = yield event | timeout
         if event in outcome:
             return event.value
         if not event.triggered:
             event.fail(TimeoutError("MRI patience exhausted"))
             event.defused = True
+            self._notify_mri_dispatch()
         return None
 
     def patient(self, patient_id: int):
@@ -277,6 +319,7 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
                 yield self.env.process(machine.scan(scan_duration + self.config.cleaning_minutes))
             finally:
                 machine.resource.release(request)
+                self._notify_mri_dispatch()
             row["scan_completed"] = True
             row["scan_completion_time"] = float(self.env.now)
 
