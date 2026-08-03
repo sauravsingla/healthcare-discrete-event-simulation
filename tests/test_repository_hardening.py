@@ -63,16 +63,22 @@ def test_cli_parser_and_positive_integer() -> None:
 def test_cli_main_writes_results(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys) -> None:
     scenario = ScenarioConfig(name="cli-test", days=1, daily_demand=1)
     output = tmp_path / "result.csv"
-    frame = pd.DataFrame(
-        [{"name": "cli-test", "replication": 0, "mean_wait_minutes": 1.0}]
-    )
+    frame = pd.DataFrame([{"name": "cli-test", "replication": 0, "mean_wait_minutes": 1.0}])
     monkeypatch.setattr(cli, "load_config", lambda _: scenario)
     monkeypatch.setattr(cli, "run_replications", lambda _config, _reps: frame)
     monkeypatch.setattr(cli, "summarise", lambda _frame: {"rows": len(_frame)})
     monkeypatch.setattr(
         sys,
         "argv",
-        ["healthcare-des", "--config", "unused.yaml", "--replications", "1", "--output", str(output)],
+        [
+            "healthcare-des",
+            "--config",
+            "unused.yaml",
+            "--replications",
+            "1",
+            "--output",
+            str(output),
+        ],
     )
     cli.main()
     assert output.is_file()
@@ -92,7 +98,9 @@ def test_calibration_metrics_table_and_plot(tmp_path: Path) -> None:
     )
     assert list(table["error"]) == [1, -1]
     assert table_metrics["mae"] == pytest.approx(1.0)
-    assert calibration.save_calibration_plot(table, tmp_path / "calibration.png", x="month").is_file()
+    assert calibration.save_calibration_plot(
+        table, tmp_path / "calibration.png", x="month"
+    ).is_file()
 
     with pytest.raises(ValueError, match="same shape"):
         calibration.calibration_metrics([1], [1, 2])
