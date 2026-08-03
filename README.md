@@ -13,15 +13,12 @@ This repository modernises and extends Saurav Singla (2020), **Demand and Capaci
 
 - [Research paper](https://www.scirp.org/journal/paperinformation?paperid=102869)
 - [DOI](https://doi.org/10.4236/ojmsi.2020.84007)
+- [Paper reproduction matrix](docs/PAPER_REPRODUCTION_MATRIX.md)
 - [Validation protocol](docs/VALIDATION.md)
 - [Validation status](docs/VALIDATION_STATUS.md)
 - [Engine guide](docs/ENGINE_GUIDE.md)
 - [DES dispatch and lifecycle design](docs/DES_DISPATCH_AND_LIFECYCLE.md)
 - [NHS benchmark evidence](docs/benchmarks/nhs/2026-08-02/README.md)
-
-<p align="center">
-  <img src="docs/assets/dashboard-preview.svg" alt="Healthcare demand and capacity dashboard preview" width="920">
-</p>
 
 ## Current evidence
 
@@ -43,188 +40,115 @@ This repository modernises and extends Saurav Singla (2020), **Demand and Capaci
 
 The NHS result is an external aggregate forecasting benchmark. It does **not** validate patient-level DES behaviour, clinical safety or local operational readiness.
 
-## Implemented capabilities and verified results
+## Singla 2020 paper reproduction evidence
 
-The following capabilities are implemented in the repository and were exercised by the merged CI workflow. Results distinguish software verification from external aggregate-data evidence.
+The repository now implements all seven evidence improvements requested for the 2020 paper. The supported claim is deliberately precise:
 
-| Implemented capability | What is available | Verified result or evidence |
-|---|---|---|
-| Patient demand generation | Outpatient appointments, inpatient arrivals and 24-hour emergency arrivals | All patient types execute through the advanced DES and reconcile in the patient ledger |
-| Multi-stage patient flow | Reception, preparation, MRI scanning and reporting | End-to-end smoke test produced non-empty patient and state outputs with lifecycle reconciliation |
-| System-wide MRI priority dispatch | Emergency before inpatient before outpatient | Priority-order regression tests passed |
-| FIFO within each priority | Arrival sequence retained for patients with equal priority | Equal-priority FIFO regression tests passed |
-| Multiple MRI scanners | Central dispatcher allocates across all available machines | Simultaneous scanner-release regression tests passed |
-| Explicit queue measurement | Total MRI queue and emergency, inpatient and outpatient queue counts | Queue accounting tests passed; queue values are generated from the actual central waiting queue |
-| Urgent-aware capacity reserve | Configurable protection of capacity when urgent demand is waiting | Reserve-behaviour regression tests passed |
-| Dynamic staffing | Time-varying clerk, radiographer and radiologist capacity | Capacity reduction and token-accounting tests passed |
-| Queue-wait patience | Waiting consumes patience; active service does not | Waiting-budget and deadline-boundary tests passed |
-| Cancellation and no-show | Separate pre-arrival outcomes for booked outpatients | Included in lifecycle ledger and reconciliation tests |
-| Abandonment | Stage-specific abandonment at reception, preparation or MRI waiting | Lifecycle and accounting tests passed |
-| Scan and report separation | Scan completion is retained even when reporting remains unfinished | Reporting-status regression tests passed |
-| Planned maintenance | `fixed_duration_after_release` and `fixed_calendar_window` policies | Maintenance-versus-dispatch timing tests passed |
-| MRI failure and repair | Stochastic failure, active-scan interruption, repair and optional scan restart | Repeated failure and scan-interruption tests passed |
-| Unique downtime accounting | Overlapping maintenance and failure blockers counted once | Downtime-overlap regression tests passed |
-| Simulation termination policies | Horizon, drain and bounded-drain execution | Termination and unfinished-patient tests passed |
-| Warm-up exclusion | Warm-up patients and state observations excluded from measured results | Warm-up-period tests passed |
-| Deterministic replications | Seed plus replication index produces reproducible but distinct runs | Determinism and replication tests passed |
-| Bootstrap uncertainty | Mean, standard deviation and 95% bootstrap intervals | Deterministic summary tests passed |
-| Sensitivity analysis | Monte Carlo and one-at-a-time parameter analysis | Implemented in the package and covered by the test suite |
-| Capacity comparison | Scenario benchmarking across demand and MRI-capacity combinations | 18 synthetic scenarios and 36 measured runs retained as evidence |
-| Queueing-theory reference | Simplified stable-case comparison using Little's Law | Approximate Little's Law consistency test passed |
-| External forecasting benchmark | Leakage-free transparent NHS MRI activity benchmark | National holdout WAPE 2.2491%; 821,577 predicted versus 840,480 observed |
-| Provider-level benchmark | Provider-level holdout evaluation | Median provider WAPE 13.0128%; 68.5% at or below 20% WAPE |
-| Public Python API | Basic and advanced simulation functions and result objects | Installed-package smoke test passed |
-| Command-line applications | Scenario runner, benchmark runner, reproduction runner and advanced benchmark | All four installed CLI entry points passed `--help` checks |
-| Research outputs | CSV, JSON metadata, figures, PDF/LaTeX/manifest-capable reporting workflows | Example outputs, benchmark metadata, README assets and paper-reproduction evidence generated successfully in CI |
-| Streamlit dashboard | Interactive standard and advanced DES exploration, including queues by patient type, patient/report lifecycle, urgent reserve, maintenance policy, failures and downtime | Five dashboard transformation tests passed; Docker health endpoint and dashboard endpoint passed |
-| Docker deployment | Reproducible dashboard container | Image build, startup, health check and endpoint verification passed |
-| Python compatibility | Python 3.10, 3.11 and 3.12 | All three CI jobs passed |
-| Repository quality | Ruff, Ruff Format, pre-commit and MyPy | All configured quality gates passed |
-| Test suite | Unit, integration, regression, invariant, dashboard and end-to-end tests | **210 tests passed** |
-| Whole-package coverage | Coverage includes the complete `healthcare_des` package | **91.88% coverage**, above the 80% gate |
-| Core advanced implementation coverage | Coverage of the legacy/internal advanced engine and public advanced model | Approximately **93%** and **96%**, respectively |
-| Dashboard helper coverage | Pure transformations used by the Streamlit dashboard | Approximately **93%** coverage |
-| Package distribution | Version 1.3.0 source distribution and wheel | `python -m build`, `twine check`, version check and clean-wheel installation passed |
+> **Source-backed reproduction contract with partial numerical reproduction.**
 
-### Latest verified CI snapshot
+It does not claim bit-for-bit equivalence with the original Simul8 model because the proprietary model, exact event calendar, Pearson V parameters and original random streams are not available.
 
-The successful Python 3.12 quality run for version 1.3.0 verified:
+### Published numerical targets captured
 
-| Verification item | Result |
+| Published result | Value |
 |---|---:|
-| Tests collected and passed | **210 / 210** |
-| Whole-package coverage | **91.88%** |
-| Advanced engine coverage | **93%** |
-| Public advanced model coverage | **96%** |
-| Paper reproduction module coverage | **92%** |
-| Calibration coverage | **96%** |
-| Configuration coverage | **91%** |
-| Primary CLI coverage | **84%** |
-| Dashboard helper coverage | **93%** |
-| Installed CLI entry points | **4 / 4 passed** |
-| Advanced benchmark scenarios generated | **18** |
-| Example replication rows generated | **5** |
-| Ranked capacity candidates generated | **10** |
-| README performance charts generated | **3** |
-| Paper reproduction evidence | DOI, 11 scenarios and 46 replications validated; JSON and CSV archived |
-| Package artifacts | Version 1.3.0 wheel and source distribution |
-| Docker verification | Build, startup, health and endpoint passed |
-| Pytest warnings | **0** |
+| Historical February 2018 demand | **2,089 scans** |
+| Simulated monthly demand range | **1,828–1,930 scans** |
+| MRI waiting-room queue before improvement | **17 minutes** |
+| MRI waiting-room queue after improvement | **5 minutes** |
+| Scenario 11 system-time reduction | **20 minutes** |
 
-### Decision outputs produced by the implementation
+### Seven implemented reproduction improvements
 
-A simulation or benchmark run can produce:
-
-- booked, cancelled, expected-arrival, no-show, physical-arrival, completed, abandoned and unfinished counts;
-- completion rate and throughput per day;
-- reception, preparation, MRI and reporting queue waits;
-- total waiting time, system time and p90 system time;
-- total and patient-type-specific MRI queue observations;
-- mean and maximum queue length;
-- MRI availability, failures and unique downtime;
-- patient-level lifecycle records and machine assignment;
-- system-state observations over time;
-- replication-level results, standard deviations and bootstrap confidence intervals;
-- scenario benchmark tables, ranked capacity alternatives and machine-readable metadata;
-- charts, reports and dashboard views for exploratory analysis.
-
-These outputs support scenario comparison and research experimentation. They must be calibrated and independently validated with local operational and patient-level evidence before real-world deployment.
-
-## What the platform models
-
-| Area | Capability |
+| Improvement | Repository implementation |
 |---|---|
-| Demand | Outpatient, inpatient and 24-hour emergency arrivals |
-| Patient flow | Reception, preparation, MRI scanning and reporting |
-| Operational behaviour | System-wide priority dispatch, FIFO within priority, cancellation, no-show, abandonment and unfinished work |
-| Capacity | MRI machines, radiographers, radiologists, clerks and dynamic staffing windows |
-| Reliability | Planned maintenance, stochastic failure, repair and optional scan restart |
-| Measurement | Explicit queue counts by patient type, lifecycle reconciliation and state observations |
-| Experimentation | Replications, bootstrap summaries, sensitivity analysis and scenario benchmarking |
-| Delivery | Python package, CLI applications, Streamlit dashboard and Docker image |
-| Quality | Linting, typing, whole-package coverage, wheel checks, Docker checks and multi-version CI |
+| 1. Missing baseline target | The 17-minute baseline MRI waiting time is exported alongside the 5-minute improved result and 20-minute scenario-11 reduction. |
+| 2. Scenario-level comparison | A comparison template and comparison function report paper value, reproduced value, absolute difference, tolerance and pass/fail. |
+| 3. Distribution fidelity | Paper-specific samplers implement exponential reception, triangular preparation `(4,5,6)`, normal MRI service `(26.46, 8.0)` and uniform reporting `(6,12)`. Pearson V arrivals remain explicitly unavailable where parameters are not disclosed. |
+| 4. MRI parameters | The supported paper baseline applies MRI mean **26.46 minutes** and standard deviation **8.0 minutes**. |
+| 5. Resource constraints | Radiographer capacity `4/3/2`, clerk capacity `1/1/1` and consultant capacity `1/1/1` are applied directly. The 90% availability assumption and hard queue capacities of 20 and 25 are exported with explicit unsupported-status notes rather than silently approximated. |
+| 6. Evidence index | A machine-readable index maps published evidence concepts to repository fields and generated outputs. |
+| 7. Claim wording | The manifest and documentation enforce the qualified partial-reproduction claim and list all unresolved limitations. |
 
-## Correctness-hardened DES behaviour
+### Eleven-scenario catalogue
 
-The public advanced implementation is `healthcare_des.advanced_model`. It owns the corrected runtime path directly and does not mutate `advanced_engine` globals at import time. This removes the previous import-order dependency and makes the public API deterministic.
+All eleven published scenario intentions are indexed. A numerical value is attached only where the currently available paper evidence provides one. Missing values are marked **not numerically disclosed in current evidence** and are never invented.
 
-### MRI dispatch
+| Scenario | Published intention |
+|---|---|
+| 01 | Outpatient arrival profile: 8-hour access |
+| 02 | Outpatient arrival profile: 16-hour access |
+| 03 | Outpatient arrival profile: 24-hour access |
+| 04 | MRI service-time distribution experiment A |
+| 05 | MRI service-time distribution experiment B |
+| 06 | MRI service-time distribution experiment C |
+| 07 | Normal-hours overbooking to offset no-shows |
+| 08 | Start/end-of-hour overbooking |
+| 09 | Exclusive resources for emergency patients |
+| 10 | Exclusive resources for inpatient and emergency patients |
+| 11 | Staff capacity changed to match demand by shift |
+
+### Generated reproduction evidence
+
+Run:
+
+```bash
+python scripts/export_paper_reproduction_spec.py \
+  --output-dir outputs/paper_reproduction \
+  --distribution-samples 1000
+```
+
+The exporter creates:
+
+- `singla_2020_reproduction_manifest.json`
+- `singla_2020_published_targets.csv`
+- `singla_2020_scenario_catalog.csv`
+- `singla_2020_comparison_template.csv`
+- `singla_2020_evidence_index.csv`
+- `singla_2020_constraint_status.csv`
+- `singla_2020_service_distribution_samples.csv`
+
+CI validates the DOI, all 11 scenarios, 46 replications, seed 17, published targets, evidence schema and generated files.
+
+## Implemented DES capabilities
+
+| Capability | Verified behaviour |
+|---|---|
+| Patient demand generation | Outpatient appointments, inpatient arrivals and 24-hour emergency arrivals |
+| Multi-stage patient flow | Reception, preparation, MRI scanning and reporting |
+| MRI priority dispatch | Emergency before inpatient before outpatient, FIFO within priority |
+| Event-driven allocation | Queue arrivals, scanner releases and availability changes wake dispatch immediately |
+| Exact deadline ordering | Same-timestamp scanner release is processed before patience expiry without extra grace |
+| Multiple scanners | One central dispatcher allocates across all available MRI machines |
+| Dynamic staffing | Time-varying clerk, radiographer and radiologist capacities |
+| Cancellation and no-show | Separate pre-arrival outcomes for booked outpatients |
+| Abandonment | Stage-specific queue-wait abandonment |
+| Maintenance | Fixed-duration-after-release and fixed-calendar-window policies |
+| Failure and repair | Stochastic failure, interruption, repair and optional restart |
+| Downtime accounting | Overlapping maintenance and failure intervals counted once |
+| Termination policies | Horizon, drain and bounded drain |
+| Replications and uncertainty | Deterministic seeds, standard deviations and bootstrap intervals |
+| Sensitivity and capacity analysis | Monte Carlo, one-at-a-time sensitivity and ranked capacity alternatives |
+| Delivery | Python API, four CLI applications, Streamlit dashboard and Docker |
+
+## MRI dispatch and lifecycle correctness
 
 MRI allocation uses one system-wide priority queue:
 
 1. emergency;
 2. inpatient;
 3. outpatient;
-4. FIFO order within each priority class.
+4. FIFO within each priority class.
 
-Dispatch is event-driven. Queue arrivals, scanner releases and availability-state changes wake the dispatcher immediately, without a polling interval or added patience allowance. Exact patience-deadline ordering is regression tested.
+Dispatch is event-driven and contains no polling interval or added patience allowance. Queue arrivals, scanner releases, maintenance transitions, failures and repairs wake the dispatcher immediately. Exact patience-deadline ordering is regression tested.
 
-Queue metrics are measured from the explicit waiting queue and include total, emergency, inpatient and outpatient counts.
-
-### Urgent-aware capacity reserve
-
-`emergency_capacity_reserve` is an **urgent-demand-aware runtime reservation**, not a permanently idle scanner allocation. Routine patients may use available scanners when no urgent patient is waiting. When urgent demand is queued, the dispatcher protects the configured reserved share from routine allocation.
-
-### Patience and reporting
-
-`abandonment_minutes` is a queue-wait budget. Active service time does not consume patience. MRI scan completion and report completion are tracked separately: a scanned patient remains completed while `report_status` records whether reporting completed or remained unfinished.
-
-### Maintenance and downtime
-
-`maintenance_policy` supports:
-
-- `fixed_duration_after_release`: the full maintenance duration starts after the scanner becomes available;
-- `fixed_calendar_window`: maintenance ends at the configured calendar-window end.
-
-Overlapping maintenance and failure blockers are integrated as one unavailable interval, preventing double-counted downtime.
-
-## Patient-flow model
-
-```mermaid
-flowchart LR
-    A[Booked outpatient] --> B{Advance cancellation?}
-    B -->|Yes| C[Cancelled]
-    B -->|No| D{No-show?}
-    D -->|Yes| E[No-show]
-    D -->|No| F[Physical arrival]
-    G[Inpatient arrival] --> F
-    H[Emergency arrival] --> F
-    F --> I[Reception queue and service]
-    I --> J[Preparation queue and service]
-    J --> K[System-wide priority MRI dispatch]
-    K --> L[MRI scan completed]
-    L --> M[Reporting queue and service]
-    M --> N[Completed with report completed]
-    L -. report not completed by termination .-> O[Completed with report unfinished]
-    I -. wait budget exhausted .-> P[Abandoned]
-    J -. wait budget exhausted .-> P
-    K -. wait budget exhausted .-> P
-```
-
-The accounting identity is enforced:
+Patient accounting enforces:
 
 ```text
 arrivals = completed + abandoned + unfinished
 ```
 
-## Architecture
-
-```mermaid
-flowchart LR
-    A[Scenario configuration] --> B[Arrival generation]
-    B --> C[Staff queues]
-    C --> D[Central MRI priority dispatcher]
-    D --> E[MRI scanner state machines]
-    E --> F[Reporting]
-    F --> G[Patient ledger]
-    D --> H[Queue and state observations]
-    E --> H
-    G --> I[KPI and uncertainty summaries]
-    H --> I
-    I --> J[CLI, benchmarks and dashboard]
-```
-
-The public advanced module owns the corrected model, machine classes and run functions. The older `advanced_engine` module remains an internal compatibility base only; importing the public module does not monkey-patch it.
+MRI scan completion and report completion are tracked separately so a scanned patient remains completed even when reporting is unfinished at termination.
 
 ## Quick start
 
@@ -243,30 +167,13 @@ Launch the dashboard:
 streamlit run app.py
 ```
 
-## Advanced engine example
+Run the advanced benchmark:
 
-```python
-from dataclasses import replace
-from healthcare_des import AdvancedScenarioConfig, run_advanced_once
-
-config = replace(
-    AdvancedScenarioConfig(),
-    name="advanced-example",
-    days=14,
-    warmup_days=2,
-    daily_demand=70,
-    mri_machines=4,
-    emergency_capacity_reserve=0.15,
-    maintenance_policy="fixed_calendar_window",
-    termination_policy="bounded_drain",
-    max_drain_minutes=720,
-    seed=17,
-)
-
-result, patients, state = run_advanced_once(config)
-print(result)
-print(patients["status"].value_counts())
-assert result.arrivals == result.completed + result.abandoned + result.unfinished
+```bash
+healthcare-des-advanced-benchmark \
+  --days 7 \
+  --replications 3 \
+  --output outputs/advanced_benchmark.csv
 ```
 
 ## Command-line applications
@@ -278,26 +185,7 @@ healthcare-des-reproduce --help
 healthcare-des-advanced-benchmark --help
 ```
 
-Run an advanced benchmark:
-
-```bash
-healthcare-des-advanced-benchmark \
-  --days 7 \
-  --replications 3 \
-  --output outputs/advanced_benchmark.csv
-```
-
 ## Dashboard and Docker
-
-The dashboard exposes both standard scenario summaries and a correctness-hardened advanced DES snapshot. It includes:
-
-- total, emergency, inpatient and outpatient MRI queue summaries;
-- completed, abandoned and unfinished patient counts;
-- patient and report lifecycle status;
-- urgent-aware MRI reserve control;
-- maintenance-policy selection;
-- MRI failure and unique-downtime KPIs;
-- scenario comparison and capacity-search outputs.
 
 ```bash
 streamlit run app.py
@@ -308,31 +196,24 @@ docker build -t healthcare-des .
 docker run --rm -p 8501:8501 healthcare-des
 ```
 
-## Verification and validation
+The Docker workflow verifies image build, startup, health and the Streamlit dashboard endpoint.
 
-The repository distinguishes software verification from external and clinical validation.
+## Verification and validation
 
 | Area | Current status |
 |---|---|
 | Priority and FIFO behaviour | Regression tested |
-| Event-driven scanner dispatch | Regression tested, including exact patience-deadline ordering |
-| Simultaneous scanner release | Regression tested |
-| Maintenance-versus-dispatch timing | Regression tested |
-| Timeout-versus-dispatch boundary | Regression tested |
-| Repeated scan interruption and repair | Regression tested |
-| Import-order independence | Regression tested |
-| Queue accounting | Explicit and regression tested |
-| Dashboard transformations | Five semantic regression tests passed |
-| Whole-package coverage | 91.88%, minimum gate 80%, no core-engine omission |
+| Event-driven scanner dispatch | Regression tested, including exact deadline ordering |
+| Maintenance, failure and downtime | Regression tested |
+| Queue and lifecycle accounting | Explicit and regression tested |
+| Paper reproduction contract | Source-backed manifest, targets, scenario catalogue, comparison template and evidence exports |
+| Whole-package coverage | **91.88%**, above the 80% gate |
 | Multi-version compatibility | Python 3.10, 3.11 and 3.12 |
-| Package and CLI verification | Version 1.3.0 wheel build, installation and CLI smoke tests |
-| Paper reproduction contract | Source-backed manifest and published-target CSV validated in CI |
-| Dashboard deployment | Docker build, Streamlit health check and endpoint verification |
+| Package and CLI verification | Wheel build, installation and CLI smoke tests |
+| Dashboard deployment | Docker health and endpoint verification |
 | External aggregate benchmark | Official NHS benchmark completed and versioned |
 | Patient-level local validation | Required before operational deployment |
 | Clinical safety validation | Required locally before operational use |
-
-A simplified stable workload also checks approximate consistency with Little's Law. This is a software-verification reference, not a substitute for calibration against real patient-flow data.
 
 ## Testing and quality
 
@@ -345,21 +226,28 @@ python -m build
 twine check dist/*
 ```
 
-Coverage applies to the complete `healthcare_des` package. The core/compatibility engine is no longer omitted from measurement.
+Latest merged verification before PR #59:
 
-The latest verified run passed **210 tests** with **91.88% whole-package coverage** and **zero pytest warnings**. CI exercises Python 3.10, 3.11 and 3.12, repository-wide pre-commit checks, linting, typing, targeted regressions, dashboard helper tests, strict whole-package coverage, installed CLI entry points, benchmark smoke tests, example output generation, README asset generation, paper-reproduction evidence export, version 1.3.0 wheel installation, Docker build and the Streamlit health endpoint.
+- **210 tests passed**
+- **91.88% whole-package coverage**
+- **zero pytest warnings**
+- Python 3.10, 3.11 and 3.12 supported
+- Ruff, Ruff Format, pre-commit and MyPy enabled
+- package and Docker checks enabled
+
+The final totals for PR #59 will be refreshed from its successful CI result before merge if they change.
 
 ## Official NHS external benchmark
 
-The repository includes an end-to-end external benchmark using official public NHS aggregate data. The selected transparent `lag_1` baseline achieved **2.2491% national holdout WAPE**, predicting 821,577 MRI activities against 840,480 observed.
+The transparent `lag_1` baseline achieved **2.2491% national holdout WAPE**, predicting 821,577 MRI activities against 840,480 observed. Median provider WAPE was 13.0128%, with 68.5% of evaluated providers at or below 20% WAPE.
 
-Provider-level performance is more variable. The median provider WAPE was 13.0128%, with 68.5% of evaluated providers at or below 20% WAPE. Full versioned evidence and provenance are available in [`docs/benchmarks/nhs/2026-08-02/`](docs/benchmarks/nhs/2026-08-02/README.md).
+Full evidence is available in [`docs/benchmarks/nhs/2026-08-02/`](docs/benchmarks/nhs/2026-08-02/README.md).
 
 ## Assumptions and limitations
 
-The project focuses on MRI patient flow rather than the entire radiology service. Default assumptions are illustrative until calibrated against authoritative local evidence.
+The platform focuses on MRI patient flow rather than the entire radiology service. Default assumptions remain illustrative until calibrated against authoritative local evidence.
 
-The paper reproduction module records the published DOI, run controls, patient mix, distribution families, aggregate targets and all eleven scenario intentions. It provides a source-backed reproduction contract and machine-readable evidence, but does not claim bit-for-bit equivalence with the original Simul8 model where proprietary event-calendar and random-stream details are unavailable.
+The paper reproduction evidence does not establish bit-for-bit Simul8 equivalence. The original model, exact event calendar, Pearson V parameters and random streams are unavailable. Scenario-level numerical comparisons are produced only where authoritative published values are available.
 
 The external NHS benchmark evaluates aggregate forecasting and evidence-processing capability. It does not demonstrate patient-level accuracy, causal impact, clinical safety or production scheduling readiness.
 
@@ -374,11 +262,11 @@ Real-world use requires independent validation of local pathways, workforce rule
 ├── examples/                # Reproducible usage examples
 ├── configs/                 # YAML scenario configurations
 ├── data/                    # Templates and non-sensitive aggregate inputs
-├── docs/                    # Validation, benchmark and engine documentation
-├── scripts/                 # Benchmarking and public-data workflows
+├── docs/                    # Validation, paper evidence and benchmarks
+├── scripts/                 # Benchmarking and evidence export workflows
 ├── outputs/                 # Generated machine-readable results
 ├── app.py                   # Streamlit dashboard entry point
-├── pyproject.toml           # Package, tooling and coverage configuration
+├── pyproject.toml           # Package and tooling configuration
 └── Dockerfile               # Reproducible container deployment
 ```
 
