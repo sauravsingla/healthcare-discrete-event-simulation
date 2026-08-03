@@ -10,6 +10,31 @@ The format follows Keep a Changelog principles and the project uses semantic ver
 
 - Patient-level calibration, clinical validation and independent operational review remain planned external activities.
 
+## [1.4.0] - 2026-08-03
+
+### Added
+
+- Source-backed Singla 2020 paper reproduction contract with qualified partial numerical reproduction.
+- Machine-readable reproduction manifest, published-target catalogue, eleven-scenario catalogue and evidence index.
+- Scenario-level comparison template with paper value, reproduced value, absolute difference, tolerance and pass/fail fields.
+- Paper-specific service-distribution samplers and explicit handling of undisclosed Pearson V arrival parameters.
+- Exported constraint-status evidence for staffing, availability and queue-capacity assumptions.
+- Reproduction evidence exporter producing JSON and CSV artifacts for independent review.
+- CI validation of DOI, all eleven scenarios, 46 replications, seed 17, published targets, evidence schema and generated files.
+- Paper reproduction matrix and expanded tests for the complete evidence set.
+
+### Changed
+
+- Package version increased from 1.3.0 to 1.4.0.
+- README reorganised around reproducible paper evidence, implemented DES capabilities and qualified claim limits.
+- Public package exports now include paper specification, targets, manifest and validation helpers.
+
+### Validation and claim limits
+
+- The release supports a source-backed reproduction contract with partial numerical reproduction, not bit-for-bit equivalence with the original proprietary Simul8 model.
+- Exact event calendars, Pearson V parameters, original random streams and undisclosed scenario values remain unavailable and are not invented.
+- Patient-level calibration, clinical safety validation and local operational approval still require authoritative local evidence and domain review.
+
 ## [1.3.0] - 2026-08-03
 
 ### Added
@@ -117,7 +142,8 @@ Before creating a tagged release:
 5. Create a version tag and release notes.
 6. Attach or link reproducible output artifacts.
 
-[Unreleased]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.1.0...v1.2.0
 [0.4.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/releases/tag/v0.4.0
