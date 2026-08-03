@@ -13,6 +13,29 @@ import simpy
 from . import advanced_engine as _engine
 
 
+class _DeadlineEvent(simpy.Event):
+    """Patience expiry scheduled after normal same-timestamp operations."""
+
+    def __init__(self, env: simpy.Environment, delay: float):
+        super().__init__(env)
+        self._ok = True
+        self._value = None
+        env.schedule(self, priority=2, delay=max(0.0, delay))
+
+
+class _NotifyingPriorityResource(simpy.PriorityResource):
+    """Priority resource that wakes central dispatch whenever capacity is released."""
+
+    def __init__(self, env: simpy.Environment, callback: Callable[[], None]):
+        self._callback = callback
+        super().__init__(env, capacity=1)
+
+    def release(self, request):
+        event = super().release(request)
+        self._callback()
+        return event
+
+
 @dataclass(frozen=True)
 class AdvancedScenarioConfig(_engine.AdvancedScenarioConfig):
     """Advanced configuration with explicit maintenance-window semantics."""
@@ -44,6 +67,7 @@ class MRIMachine(_engine.MRIMachine):
         self._unavailable_since: float | None = None
         self._availability_changed = availability_changed or (lambda: None)
         super().__init__(env, machine_id, config, rng)
+        self.resource = _NotifyingPriorityResource(env, self._availability_changed)
 
     def _add_blocker(self, blocker: str) -> None:
         if not self.blockers:
@@ -159,21 +183,6 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
         if not self._mri_dispatch_signal.triggered:
             self._mri_dispatch_signal.succeed()
 
-    def _consume_mri_dispatch_signal(self) -> simpy.Event:
-        signal = self._mri_dispatch_signal
-        self._mri_dispatch_signal = self.env.event()
-        return signal
-
-    def _deadline_barrier(self, deadline: float):
-        """Expire at the exact deadline after all same-timestamp events settle."""
-        delay = max(0.0, deadline - float(self.env.now))
-        if delay:
-            yield self.env.timeout(delay)
-        # A zero-duration barrier preserves the deadline while allowing scanner
-        # release and dispatcher wake events already scheduled at this timestamp
-        # to run before patience is declared exhausted.
-        yield self.env.timeout(0)
-
     def _track_state(self):
         while True:
             yield self.env.process(self.clerks.rebalance())
@@ -237,16 +246,18 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
                     event.succeed((machine, request))
                 else:
                     machine.resource.release(request)
-                    self._notify_mri_dispatch()
                 dispatched = True
             if dispatched:
                 yield self.env.timeout(0)
                 continue
-            signal = self._consume_mri_dispatch_signal()
+            signal = self._mri_dispatch_signal
             if signal.triggered:
+                self._mri_dispatch_signal = self.env.event()
                 yield self.env.timeout(0)
-            else:
-                yield signal
+                continue
+            yield signal
+            if signal is self._mri_dispatch_signal:
+                self._mri_dispatch_signal = self.env.event()
 
     def _acquire_any_machine(self, priority: int, deadline: float, patient_type: str | None = None):
         patient_type = patient_type or next(
@@ -256,7 +267,7 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
         self._mri_sequence += 1
         heapq.heappush(self._mri_waiters, (priority, self._mri_sequence, patient_type, event))
         self._notify_mri_dispatch()
-        timeout = self.env.process(self._deadline_barrier(deadline))
+        timeout = _DeadlineEvent(self.env, deadline - float(self.env.now))
         outcome = yield event | timeout
         if event in outcome:
             return event.value
@@ -319,7 +330,6 @@ class AdvancedMRIModel(_engine.AdvancedMRIModel):
                 yield self.env.process(machine.scan(scan_duration + self.config.cleaning_minutes))
             finally:
                 machine.resource.release(request)
-                self._notify_mri_dispatch()
             row["scan_completed"] = True
             row["scan_completion_time"] = float(self.env.now)
 
