@@ -12,6 +12,11 @@ import pandas as pd
 REQUIRED_COLUMNS = {"provider_code", "period", "actual", "predicted"}
 
 
+def _parse_months(period: pd.Series) -> pd.Series:
+    """Parse heterogeneous calendar-month values without per-element inference warnings."""
+    return pd.to_datetime(period, format="mixed", errors="coerce").dt.to_period("M")
+
+
 def _safe_mape(actual: pd.Series, predicted: pd.Series) -> float:
     mask = actual.ne(0) & actual.notna() & predicted.notna()
     if not mask.any():
@@ -43,7 +48,7 @@ def _direction_accuracy(actual: pd.Series, predicted: pd.Series) -> float:
 
 
 def assign_split(period: pd.Series, validation_months: int, holdout_months: int) -> pd.Series:
-    parsed = pd.to_datetime(period, errors="coerce").dt.to_period("M")
+    parsed = _parse_months(period)
     if parsed.isna().any():
         raise ValueError("All periods must be parseable as calendar months")
     unique_periods = sorted(parsed.unique())
@@ -76,7 +81,7 @@ def score(
 
     frame = frame.copy()
     frame["provider_code"] = frame["provider_code"].astype(str).str.strip().str.upper()
-    frame["period"] = pd.to_datetime(frame["period"], errors="coerce").dt.to_period("M").astype(str)
+    frame["period"] = _parse_months(frame["period"]).astype(str)
     frame["actual"] = pd.to_numeric(frame["actual"], errors="coerce")
     frame["predicted"] = pd.to_numeric(frame["predicted"], errors="coerce")
     frame = frame.dropna(subset=["actual", "predicted"])
