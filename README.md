@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/sauravsingla/healthcare-discrete-event-simulation/actions/workflows/ci.yml/badge.svg)](https://github.com/sauravsingla/healthcare-discrete-event-simulation/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Coverage](https://img.shields.io/badge/whole--package%20coverage-84.80%25-brightgreen)](#testing-and-quality)
+[![Coverage](https://img.shields.io/badge/whole--package%20coverage-91.75%25-brightgreen)](#testing-and-quality)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.4236%2Fojmsi.2020.84007-blue)](https://doi.org/10.4236/ojmsi.2020.84007)
 [![Docker](https://img.shields.io/badge/Docker-verified-2496ED?logo=docker&logoColor=white)](#dashboard-and-docker)
@@ -35,8 +35,8 @@ This repository modernises and extends Saurav Singla (2020), **Demand and Capaci
 | Provider-level median WAPE | 13.0128% |
 | Synthetic demand-capacity scenarios | 18 |
 | Measured simulation runs | 36 |
-| Latest verified tests | **193 passed** |
-| Latest whole-package coverage | **84.80%** |
+| Latest verified tests | **202 passed** |
+| Latest whole-package coverage | **91.75%** |
 | Supported Python versions | 3.10, 3.11 and 3.12 |
 | Package version | **1.3.0** |
 | Coverage policy | Whole package, minimum 80% |
@@ -80,8 +80,8 @@ The following capabilities are implemented in the repository and were exercised 
 | Docker deployment | Reproducible dashboard container | Image build, startup, health check and endpoint verification passed |
 | Python compatibility | Python 3.10, 3.11 and 3.12 | All three CI jobs passed |
 | Repository quality | Ruff, Ruff Format, pre-commit and MyPy | All configured quality gates passed |
-| Test suite | Unit, integration, regression, invariant, dashboard and end-to-end tests | **193 tests passed** |
-| Whole-package coverage | Coverage includes the complete `healthcare_des` package | **84.80% coverage**, above the 80% gate |
+| Test suite | Unit, integration, regression, invariant, dashboard and end-to-end tests | **202 tests passed** |
+| Whole-package coverage | Coverage includes the complete `healthcare_des` package | **91.75% coverage**, above the 80% gate |
 | Core advanced implementation coverage | Coverage of the legacy/internal advanced engine and public advanced model | Approximately **93%** and **96%**, respectively |
 | Dashboard helper coverage | Pure transformations used by the Streamlit dashboard | Approximately **93%** coverage |
 | Package distribution | Version 1.3.0 source distribution and wheel | `python -m build`, `twine check`, version check and clean-wheel installation passed |
@@ -92,10 +92,13 @@ The successful Python 3.12 quality run for version 1.3.0 verified:
 
 | Verification item | Result |
 |---|---:|
-| Tests collected and passed | **193 / 193** |
-| Whole-package coverage | **84.80%** |
+| Tests collected and passed | **202 / 202** |
+| Whole-package coverage | **91.75%** |
 | Advanced engine coverage | **93%** |
 | Public advanced model coverage | **96%** |
+| Calibration coverage | **96%** |
+| Configuration coverage | **91%** |
+| Primary CLI coverage | **84%** |
 | Dashboard helper coverage | **93%** |
 | Installed CLI entry points | **4 / 4 passed** |
 | Advanced benchmark scenarios generated | **18** |
@@ -105,7 +108,7 @@ The successful Python 3.12 quality run for version 1.3.0 verified:
 | Quality artifacts uploaded | **12 files** |
 | Package artifacts | Version 1.3.0 wheel and source distribution |
 | Docker verification | Build, startup, health and endpoint passed |
-| Non-failing test warnings | **3**: two regex-group warnings and one date-format inference warning |
+| Non-failing test warnings | **2** regex capture-group warnings in the NHS end-to-end ingestion workflow |
 
 ### Decision outputs produced by the implementation
 
@@ -316,7 +319,7 @@ The repository distinguishes software verification from external and clinical va
 | Import-order independence | Regression tested |
 | Queue accounting | Explicit and regression tested |
 | Dashboard transformations | Five semantic regression tests passed |
-| Whole-package coverage | 84.80%, minimum gate 80%, no core-engine omission |
+| Whole-package coverage | 91.75%, minimum gate 80%, no core-engine omission |
 | Multi-version compatibility | Python 3.10, 3.11 and 3.12 |
 | Package and CLI verification | Version 1.3.0 wheel build, installation and CLI smoke tests |
 | Dashboard deployment | Docker build, Streamlit health check and endpoint verification |
@@ -339,9 +342,9 @@ twine check dist/*
 
 Coverage applies to the complete `healthcare_des` package. The core/compatibility engine is no longer omitted from measurement.
 
-The latest verified run passed **193 tests** with **84.80% whole-package coverage**. CI exercises Python 3.10, 3.11 and 3.12, repository-wide pre-commit checks, linting, typing, targeted regressions, dashboard helper tests, strict whole-package coverage, installed CLI entry points, benchmark smoke tests, example output generation, README asset generation, version 1.3.0 wheel installation, Docker build and the Streamlit health endpoint.
+The latest verified run passed **202 tests** with **91.75% whole-package coverage**. CI exercises Python 3.10, 3.11 and 3.12, repository-wide pre-commit checks, linting, typing, targeted regressions, dashboard helper tests, strict whole-package coverage, installed CLI entry points, benchmark smoke tests, example output generation, README asset generation, version 1.3.0 wheel installation, Docker build and the Streamlit health endpoint.
 
-The test run currently reports three non-failing warnings: two regular-expression capture-group warnings in the NHS end-to-end script and one date-format inference warning in the NHS benchmark scoring script.
+The test run currently reports two non-failing regular-expression capture-group warnings in the NHS end-to-end ingestion workflow. The previous date-format inference warning has been removed by explicit mixed-format month parsing.
 
 ## Official NHS external benchmark
 
