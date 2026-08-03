@@ -103,14 +103,23 @@ def paper_base_config() -> AdvancedScenarioConfig:
         preparation_mean=PUBLISHED_SPEC.preparation_triangular_mode,
         scan_mean=PUBLISHED_SPEC.mri_normal_mean_minutes,
         scan_sd=PUBLISHED_SPEC.mri_normal_sd_minutes,
-        report_mean=(PUBLISHED_SPEC.report_uniform_low_minutes + PUBLISHED_SPEC.report_uniform_high_minutes) / 2,
-        clerk_capacity=tuple(CapacityWindow(start, start + 480, PUBLISHED_SPEC.clerk_per_shift) for start in (0, 480, 960)),
+        report_mean=(
+            PUBLISHED_SPEC.report_uniform_low_minutes + PUBLISHED_SPEC.report_uniform_high_minutes
+        )
+        / 2,
+        clerk_capacity=tuple(
+            CapacityWindow(start, start + 480, PUBLISHED_SPEC.clerk_per_shift)
+            for start in (0, 480, 960)
+        ),
         radiographer_capacity=(
             CapacityWindow(0, 480, PUBLISHED_SPEC.radiographer_morning),
             CapacityWindow(480, 960, PUBLISHED_SPEC.radiographer_evening),
             CapacityWindow(960, 1440, PUBLISHED_SPEC.radiographer_night),
         ),
-        radiologist_capacity=tuple(CapacityWindow(start, start + 480, PUBLISHED_SPEC.consultant_per_shift) for start in (0, 480, 960)),
+        radiologist_capacity=tuple(
+            CapacityWindow(start, start + 480, PUBLISHED_SPEC.consultant_per_shift)
+            for start in (0, 480, 960)
+        ),
         seed=PUBLISHED_SPEC.random_seed,
         termination_policy="horizon",
     )
@@ -122,7 +131,9 @@ def sample_published_service_times(rng: np.random.Generator, size: int) -> pd.Da
         raise ValueError("size must be positive")
     return pd.DataFrame(
         {
-            "reception_minutes": rng.exponential(PUBLISHED_SPEC.reception_exponential_mean_minutes, size),
+            "reception_minutes": rng.exponential(
+                PUBLISHED_SPEC.reception_exponential_mean_minutes, size
+            ),
             "preparation_minutes": rng.triangular(
                 PUBLISHED_SPEC.preparation_triangular_low,
                 PUBLISHED_SPEC.preparation_triangular_mode,
@@ -131,7 +142,11 @@ def sample_published_service_times(rng: np.random.Generator, size: int) -> pd.Da
             ),
             "mri_minutes": np.maximum(
                 0.0,
-                rng.normal(PUBLISHED_SPEC.mri_normal_mean_minutes, PUBLISHED_SPEC.mri_normal_sd_minutes, size),
+                rng.normal(
+                    PUBLISHED_SPEC.mri_normal_mean_minutes,
+                    PUBLISHED_SPEC.mri_normal_sd_minutes,
+                    size,
+                ),
             ),
             "report_minutes": rng.uniform(
                 PUBLISHED_SPEC.report_uniform_low_minutes,
@@ -151,7 +166,10 @@ def published_targets() -> pd.DataFrame:
         ("improved", "mri_waiting_room_queue_after", 5, 5, 5, "minutes"),
         ("scenario-11", "system_time_reduction", 20, 20, 20, "minutes"),
     ]
-    return pd.DataFrame(rows, columns=["scenario", "target", "expected", "lower", "upper", "unit"])
+    return pd.DataFrame(
+        rows,
+        columns=["scenario", "target", "expected", "lower", "upper", "unit"],
+    )
 
 
 def scenario_results_catalog() -> pd.DataFrame:
@@ -166,7 +184,9 @@ def scenario_results_catalog() -> pd.DataFrame:
                 "published_numeric_result_available": available,
                 "published_metric": "system_time_reduction" if available else None,
                 "published_value": 20.0 if available else None,
-                "status": "transcribed" if available else "not numerically disclosed in current evidence",
+                "status": "transcribed"
+                if available
+                else "not numerically disclosed in current evidence",
             }
         )
     return pd.DataFrame(rows)
@@ -177,11 +197,31 @@ def paper_table_figure_index() -> pd.DataFrame:
     return pd.DataFrame(
         [
             ("run controls", "published_specification", "reproduction_manifest.json"),
-            ("patient mix", "published_specification.*_share", "reproduction_manifest.json"),
-            ("service distributions", "distribution_fidelity", "service_distribution_samples.csv"),
-            ("monthly demand validation", "published_targets: simulated_monthly_demand", "published_targets.csv"),
-            ("MRI queue before/after", "published_targets: mri_waiting_room_queue_*", "published_targets.csv"),
-            ("scenario 11", "published_targets: system_time_reduction", "comparison_template.csv"),
+            (
+                "patient mix",
+                "published_specification.*_share",
+                "reproduction_manifest.json",
+            ),
+            (
+                "service distributions",
+                "distribution_fidelity",
+                "service_distribution_samples.csv",
+            ),
+            (
+                "monthly demand validation",
+                "published_targets: simulated_monthly_demand",
+                "published_targets.csv",
+            ),
+            (
+                "MRI queue before/after",
+                "published_targets: mri_waiting_room_queue_*",
+                "published_targets.csv",
+            ),
+            (
+                "scenario 11",
+                "published_targets: system_time_reduction",
+                "comparison_template.csv",
+            ),
             ("all 11 scenarios", "scenario_results_catalog", "scenario_catalog.csv"),
         ],
         columns=["paper_evidence", "repository_mapping", "reproduction_output"],
@@ -192,9 +232,21 @@ def operational_constraint_status() -> pd.DataFrame:
     """Show which published constraints are applied directly or retained as evidence."""
     return pd.DataFrame(
         [
-            ("90% resource availability", 0.90, "metadata; no generic availability field in engine"),
-            ("reception queue capacity", 20, "metadata; engine currently models patience rather than hard queue caps"),
-            ("reading-room queue capacity", 25, "metadata; engine currently models patience rather than hard queue caps"),
+            (
+                "90% resource availability",
+                0.90,
+                "metadata; no generic availability field in engine",
+            ),
+            (
+                "reception queue capacity",
+                20,
+                "metadata; engine currently models patience rather than hard queue caps",
+            ),
+            (
+                "reading-room queue capacity",
+                25,
+                "metadata; engine currently models patience rather than hard queue caps",
+            ),
             ("radiographer shift capacity", "4/3/2", "applied directly"),
             ("clerk shift capacity", "1/1/1", "applied directly"),
             ("consultant shift capacity", "1/1/1", "applied directly"),
@@ -240,25 +292,38 @@ def comparison_template() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def compare_reproduced_results(reproduced: pd.DataFrame, tolerance_pct: float = 10.0) -> pd.DataFrame:
+def compare_reproduced_results(
+    reproduced: pd.DataFrame, tolerance_pct: float = 10.0
+) -> pd.DataFrame:
     """Compare supplied reproduced metrics with every available paper target."""
     required = {"scenario", "metric", "reproduced_value"}
     missing = required - set(reproduced.columns)
     if missing:
         raise ValueError(f"Missing reproduced columns: {', '.join(sorted(missing))}")
-    targets = published_targets().rename(columns={"target": "metric", "expected": "paper_value"})
+    targets = published_targets().rename(
+        columns={"target": "metric", "expected": "paper_value"}
+    )
     merged = targets.merge(reproduced, on=["scenario", "metric"], how="left")
-    merged["absolute_difference"] = (merged["reproduced_value"] - merged["paper_value"]).abs()
+    merged["absolute_difference"] = (
+        merged["reproduced_value"] - merged["paper_value"]
+    ).abs()
     denominator = merged["paper_value"].abs().replace(0, 1)
     merged["error_pct"] = merged["absolute_difference"] / denominator * 100
     merged["tolerance_pct"] = tolerance_pct
-    merged["passed"] = merged["reproduced_value"].notna() & (merged["error_pct"] <= tolerance_pct)
+    merged["passed"] = merged["reproduced_value"].notna() & (
+        merged["error_pct"] <= tolerance_pct
+    )
     return merged
 
 
 def reproduction_manifest() -> dict[str, Any]:
     return {
-        "citation": {"doi": PAPER_DOI, "url": PAPER_URL, "title": "Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation", "year": 2020},
+        "citation": {
+            "doi": PAPER_DOI,
+            "url": PAPER_URL,
+            "title": "Demand and Capacity Modelling in Healthcare Using Discrete Event Simulation",
+            "year": 2020,
+        },
         "claim": REPRODUCTION_CLAIM,
         "published_specification": asdict(PUBLISHED_SPEC),
         "derived_values": {
@@ -269,7 +334,10 @@ def reproduction_manifest() -> dict[str, Any]:
         "scenario_intent": PUBLISHED_SCENARIO_INTENT,
         "supported_baseline_config": asdict(paper_base_config()),
         "distribution_fidelity": {
-            "patient_interarrival": "Pearson V family disclosed; shape/scale unavailable in current evidence, so not fabricated",
+            "patient_interarrival": (
+                "Pearson V family disclosed; shape/scale unavailable in current evidence, "
+                "so not fabricated"
+            ),
             "preparation": "triangular(4,5,6) implemented exactly in paper-specific sampler",
             "report_interpretation": "uniform(6,12) implemented exactly in paper-specific sampler",
             "mri_service": "normal(26.46,8.0) implemented in paper-specific sampler",
@@ -285,7 +353,16 @@ def reproduction_manifest() -> dict[str, Any]:
 
 def validate_reproduction_manifest(manifest: dict[str, Any] | None = None) -> None:
     selected = reproduction_manifest() if manifest is None else manifest
-    required = {"citation", "claim", "published_specification", "derived_values", "scenario_intent", "supported_baseline_config", "distribution_fidelity", "limitations"}
+    required = {
+        "citation",
+        "claim",
+        "published_specification",
+        "derived_values",
+        "scenario_intent",
+        "supported_baseline_config",
+        "distribution_fidelity",
+        "limitations",
+    }
     missing = required - set(selected)
     if missing:
         raise ValueError(f"Missing reproduction manifest sections: {', '.join(sorted(missing))}")
@@ -293,13 +370,33 @@ def validate_reproduction_manifest(manifest: dict[str, Any] | None = None) -> No
         raise ValueError("The reproduction manifest must contain all eleven paper scenarios")
     if PUBLISHED_SPEC.replications != 46 or PUBLISHED_SPEC.random_seed != 17:
         raise ValueError("Published run-control assumptions were altered")
-    if abs(PUBLISHED_SPEC.outpatient_share + PUBLISHED_SPEC.inpatient_share + PUBLISHED_SPEC.emergency_share - 1.0) > 1e-9:
+    if (
+        abs(
+            PUBLISHED_SPEC.outpatient_share
+            + PUBLISHED_SPEC.inpatient_share
+            + PUBLISHED_SPEC.emergency_share
+            - 1.0
+        )
+        > 1e-9
+    ):
         raise ValueError("Published patient shares must sum to one")
 
 
 __all__ = [
-    "PAPER_DOI", "PAPER_URL", "PUBLISHED_SCENARIO_INTENT", "PUBLISHED_SPEC", "REPRODUCTION_CLAIM",
-    "PublishedPaperSpecification", "compare_reproduced_results", "comparison_template", "operational_constraint_status",
-    "paper_base_config", "paper_table_figure_index", "published_targets", "reproduction_manifest",
-    "sample_published_service_times", "scenario_results_catalog", "validate_reproduction_manifest",
+    "PAPER_DOI",
+    "PAPER_URL",
+    "PUBLISHED_SCENARIO_INTENT",
+    "PUBLISHED_SPEC",
+    "REPRODUCTION_CLAIM",
+    "PublishedPaperSpecification",
+    "compare_reproduced_results",
+    "comparison_template",
+    "operational_constraint_status",
+    "paper_base_config",
+    "paper_table_figure_index",
+    "published_targets",
+    "reproduction_manifest",
+    "sample_published_service_times",
+    "scenario_results_catalog",
+    "validate_reproduction_manifest",
 ]
