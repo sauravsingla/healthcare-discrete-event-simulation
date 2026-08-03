@@ -6,7 +6,7 @@ This document separates software correctness, empirical model validation and exa
 
 The latest verified version 1.3.0 quality run completed on **3 August 2026** across Python **3.10, 3.11 and 3.12**. It covered repository-wide pre-commit and Ruff checks, configured MyPy checks, targeted DES regressions, the complete test suite, strict whole-package coverage, all installed CLI entry points, advanced-model smoke execution, benchmark and metadata generation, example outputs, README performance assets, source and wheel builds, `twine check`, clean-wheel installation, Docker build, container health and the Streamlit endpoint.
 
-The verified snapshot contains **193 passed tests** and **84.80% whole-package coverage**, above the enforced 80% gate. The public advanced model is approximately 96% covered, the compatibility engine approximately 93%, and dashboard transformation helpers approximately 93%. Five semantic dashboard transformation tests are included.
+The verified snapshot contains **202 passed tests** and **91.75% whole-package coverage**, above the enforced 80% gate. The public advanced model is approximately 96% covered, the compatibility engine approximately 93%, dashboard transformation helpers approximately 93%, calibration approximately 96%, configuration approximately 91%, and the primary CLI approximately 84%. Five semantic dashboard transformation tests are included.
 
 ## Current software status
 
@@ -25,7 +25,7 @@ The verified snapshot contains **193 passed tests** and **84.80% whole-package c
 | Dashboard semantics | Verified | Five transformation tests cover lifecycle, queues, reliability and state summaries |
 | Paper scenario registry | Verified | All eleven registered paper scenarios validate and execute |
 | Distribution fitting | Verified | Information criteria and SciPy-compatible goodness-of-fit execution are tested |
-| Strict test coverage | Verified | 84.80% whole-package coverage; minimum 80% enforced without core-engine omission |
+| Strict test coverage | Verified | 91.75% whole-package coverage; minimum 80% enforced without core-engine omission |
 | Static quality | Verified | Pre-commit, Ruff and configured MyPy checks pass |
 | CLI and benchmarks | Verified | Four installed entry points and bounded benchmark workflows execute |
 | Package integrity | Verified | Version 1.3.0 source and wheel distributions build and pass `twine check` |
@@ -43,7 +43,7 @@ The verified snapshot contains **193 passed tests** and **84.80% whole-package c
 
 ## Known non-failing warnings
 
-The latest baseline run reported two regular-expression capture-group warnings in the NHS ingestion workflow and one period-parsing warning. The period parsing path is hardened in the gap-closure work. The regex warnings are non-functional ingestion warnings and must only be removed with a regression proving identical MRI row selection.
+The latest verified run reports **two** regular-expression capture-group warnings in the NHS end-to-end ingestion workflow. The previous period-parsing warning has been removed by the explicit mixed-format month parser. The remaining regex warnings are non-functional ingestion warnings and should only be removed with regression evidence proving identical MRI row selection.
 
 ## Architecture status
 
