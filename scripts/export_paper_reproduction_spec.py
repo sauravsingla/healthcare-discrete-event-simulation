@@ -37,7 +37,8 @@ def main() -> None:
     manifest = reproduction_manifest()
     validate_reproduction_manifest(manifest)
     outputs = {
-        "singla_2020_reproduction_manifest.json": json.dumps(manifest, indent=2, default=str) + "\n",
+        "singla_2020_reproduction_manifest.json": json.dumps(manifest, indent=2, default=str)
+        + "\n",
     }
     for filename, content in outputs.items():
         (output_dir / filename).write_text(content, encoding="utf-8")
