@@ -135,9 +135,9 @@ jobs:
                   "outputs/paper_reproduction/singla_2020_reproduction_manifest.json"
               ).read_text()
           )
-          assert manifest["paper"]["doi"] == "10.4236/ojmsi.2020.84007"
-          assert len(manifest["scenarios"]) == 11
-          assert manifest["run_controls"]["replications"] == 46
+          assert manifest["citation"]["doi"] == "10.4236/ojmsi.2020.84007"
+          assert len(manifest["scenario_intent"]) == 11
+          assert manifest["published_specification"]["replications"] == 46
           print("Paper reproduction evidence validated")
           PY
       - name: Build package
