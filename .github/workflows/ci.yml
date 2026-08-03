@@ -119,6 +119,27 @@ jobs:
           test -s docs/assets/generated/runtime_by_demand.png
           test -s docs/assets/generated/runtime_by_mri_capacity.png
           test -s docs/assets/generated/output_growth_by_demand.png
+      - name: Validate paper reproduction evidence exporter
+        if: matrix.python-version == '3.12'
+        run: |
+          python scripts/export_paper_reproduction_spec.py \
+            --output-dir outputs/paper_reproduction
+          test -s outputs/paper_reproduction/singla_2020_reproduction_manifest.json
+          test -s outputs/paper_reproduction/singla_2020_published_targets.csv
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path(
+                  "outputs/paper_reproduction/singla_2020_reproduction_manifest.json"
+              ).read_text()
+          )
+          assert manifest["citation"]["doi"] == "10.4236/ojmsi.2020.84007"
+          assert len(manifest["scenario_intent"]) == 11
+          assert manifest["published_specification"]["replications"] == 46
+          print("Paper reproduction evidence validated")
+          PY
       - name: Build package
         run: python -m build
       - name: Validate package metadata
@@ -144,6 +165,8 @@ jobs:
             outputs/example_summary.csv
             outputs/example_capacity_candidates.csv
             outputs/readme_advanced_benchmark.csv
+            outputs/paper_reproduction/singla_2020_reproduction_manifest.json
+            outputs/paper_reproduction/singla_2020_published_targets.csv
             docs/assets/generated/*.png
             dist/*
           if-no-files-found: warn

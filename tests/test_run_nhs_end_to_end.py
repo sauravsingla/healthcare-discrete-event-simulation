@@ -13,6 +13,27 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def test_mri_pattern_is_noncapturing_and_selects_expected_rows() -> None:
+    modalities = pd.Series(
+        [
+            "MRI",
+            "Magnetic Resonance",
+            "Magnetic Resonance Imaging",
+            "CT",
+            "MRI-guided procedure",
+        ]
+    )
+
+    assert MODULE.MRI_PATTERN.groups == 0
+    assert modalities.str.contains(MODULE.MRI_PATTERN, na=False).tolist() == [
+        True,
+        True,
+        True,
+        False,
+        True,
+    ]
+
+
 def test_end_to_end_outputs_are_derived_and_leakage_free(tmp_path: Path) -> None:
     raw = tmp_path / "raw"
     raw.mkdir()
