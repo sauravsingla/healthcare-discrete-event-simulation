@@ -8,14 +8,44 @@ The format follows Keep a Changelog principles and the project uses semantic ver
 
 ### Added
 
-- Repository maturity and validation programme with measurable acceptance criteria.
-- Explicit programme for exact paper reproduction, external simulation validation, full core-module typing, immutable research releases and one-command reproduction.
+- Patient-level calibration, clinical validation and independent operational review remain planned external activities.
+
+## [1.3.0] - 2026-08-03
+
+### Added
+
+- System-wide MRI priority dispatch with emergency, inpatient and outpatient ordering.
+- FIFO dispatch within each priority class and explicit queue measurements by patient type.
+- Urgent-aware runtime MRI capacity reservation.
+- Queue-wait-only abandonment semantics.
+- Separate MRI scan-completion and reporting-completion lifecycle states.
+- Explicit maintenance-window policies and unique overlapping-downtime accounting.
+- Repeated failure, repair and optional scan-restart handling.
+- Import-order-independent public advanced simulation runtime.
+- Dashboard views for advanced lifecycle, queue, failure and downtime metrics.
+- Testable dashboard transformation helpers and dashboard semantic regression tests.
+- Whole-package coverage enforcement and expanded concurrency, boundary and analytical tests.
+- Versioned capability and verification results in the README.
 
 ### Changed
 
-- Reorganised the research roadmap into completed, current, medium-term and long-term work.
-- Corrected `CITATION.cff` to match software version 1.2.0 and its release date.
-- Clarified that the NHS benchmark validates the aggregate forecasting and evidence pipeline rather than patient-level or clinical simulation behaviour.
+- Package metadata now uses an SPDX licence expression.
+- Package version increased from 1.2.0 to 1.3.0.
+- The README distinguishes software verification, aggregate NHS forecasting evidence and local clinical validation.
+
+### Verified baseline before the dashboard additions
+
+- Python 3.10, 3.11 and 3.12 CI jobs.
+- 188 tests passed.
+- 84.68% whole-package branch coverage.
+- Wheel and source-distribution build, metadata checks and clean-wheel installation.
+- Four installed CLI entry points.
+- Docker image build and Streamlit health endpoint.
+
+### Validation and claim limits
+
+- Public NHS inputs are aggregate operational data, not patient-level data.
+- Patient-level calibration, clinical safety validation and local operational approval require authoritative local evidence and domain review.
 
 ## [1.2.0] - 2026-07-30
 
@@ -87,6 +117,7 @@ Before creating a tagged release:
 5. Create a version tag and release notes.
 6. Attach or link reproducible output artifacts.
 
-[Unreleased]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/compare/v1.1.0...v1.2.0
 [0.4.0]: https://github.com/sauravsingla/healthcare-discrete-event-simulation/releases/tag/v0.4.0
